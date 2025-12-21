@@ -593,7 +593,7 @@ sudo sysctl vm.swappiness=10 # Set swappiness
 
 ### Security Configuration
 
-See `ssh-hardening-guide.md` for detailed SSH hardening steps.
+See `02-ssh-hardening-guide.md` for detailed SSH hardening steps.
 
 ### Automated Hardening Script
 

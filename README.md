@@ -123,7 +123,7 @@ Each phase follows this format:
 ```
 PhaseX/
 ├── scripts/              # Automation scripts & exercises
-├── Xxxx-xxxx-guide.md    # Main learning guide
+├── 01-linux-basics-guide.md # Main learning guide
 └── cleanup-guide.md      # Resource cleanup (if applicable)
 ```
 
@@ -156,10 +156,10 @@ PhaseX/
 
 | Guide | Topics |
 |-------|--------|
-| `linux-basics-guide.md` | Complete Linux fundamentals |
-| `ssh-hardening-guide.md` | SSH security configuration |
-| `azure-vm-setup-guide.md` | Azure VM creation |
-| `cleanup-guide.md` | Resource cleanup |
+| `01-linux-basics-guide.md` | Complete Linux fundamentals |
+| `02-ssh-hardening-guide.md` | SSH security configuration |
+| `03-azure-vm-setup-guide.md` | Azure VM creation |
+| `99-cleanup-guide.md` | Resource cleanup |
 
 #### Professional Deliverables
 
@@ -202,7 +202,7 @@ PhaseX/
 
 | Guide | Topics |
 |-------|--------|
-| `git-workflows-guide.md` | Complete Git workflow guide |
+| `01-git-workflows-guide.md` | Complete Git workflow guide |
 
 #### Professional Deliverables
 
@@ -223,30 +223,82 @@ PhaseX/
 
 ### Phase 3: Azure Fundamentals & Security
 
-> **Objective**: Design secure, identity-first Azure environments.
+> **Objective**: Design secure, identity-first Azure environments using modern zero-trust principles.
 
 | Aspect | Details |
 |--------|---------|
 | **Duration** | 6-8 hours |
-| **Prerequisites** | Phase 2 complete |
+| **Prerequisites** | Phase 2 complete, Azure subscription |
 
 #### Core Competencies
 
 | Skill | Description |
 |-------|-------------|
-| Resource Organization | Resource groups, naming conventions |
-| Network Security | VNets, subnets, NSGs, private endpoints |
-| Identity Management | Azure AD, RBAC, Managed Identities |
-| Secrets Management | Key Vault, environment variables |
-| Monitoring | Azure Monitor, Log Analytics |
+| Resource Organization | Management groups, subscriptions, resource groups, naming conventions |
+| Network Security | VNets, subnets, NSGs, Private Endpoints, Service Endpoints, Network Security Perimeters |
+| Identity Management | Azure AD, RBAC, Privileged Identity Management (PIM), Microsoft Entra ID |
+| Secrets Management | Key Vault with RBAC, Managed Identities, access policies |
+| Monitoring | Azure Monitor, Log Analytics, Azure Sentinel, diagnostic settings |
+| Security Governance | Azure Policy, Microsoft Defender for Cloud, compliance frameworks |
+
+#### Learning Content
+
+| Guide | Topics |
+|-------|--------|
+| `Phase3/01-azure-identity-guide.md` | Identity architecture, RBAC best practices, Managed Identity implementation |
+| `Phase3/02-azure-network-security.md` | VNet design, NSG rules, Private Endpoint configuration, Network Security Perimeters |
+| `Phase3/03-azure-keyvault-guide.md` | Secret management, Key Vault RBAC, integration patterns |
+| `Phase3/04-azure-monitoring-guide.md` | Log Analytics, Azure Monitor, alerting strategies |
+
+#### Professional Deliverables
+
+- [ ] Azure landing zone with management group hierarchy
+- [ ] VNet with subnets secured by NSGs and Private Endpoints
+- [ ] Key Vault with RBAC-based access and Managed Identity integration
+- [ ] Azure Policy assignments for security compliance
+- [ ] Log Analytics workspace with diagnostic settings
+- [ ] Documented security architecture runbook
+
+#### 2025 Azure Security Best Practices
+
+**Identity & Access Management:**
+- Use **Microsoft Entra ID** (formerly Azure AD) as the identity provider
+- Implement **Privileged Identity Management (PIM)** for just-in-time access
+- Prefer **RBAC over Azure AD roles** for resource access control
+- Use **user-assigned managed identities** for cross-resource scenarios (recommended by Microsoft)
+- Apply **least-privilege** principles - start with Reader, escalate only when needed
+
+**Network Security:**
+- Use **Private Endpoints** over Service Endpoints for critical resources
+- Deploy **Network Security Groups (NSGs)** at subnet and NIC levels
+- Implement **Network Security Perimeters** for enhanced micro-segmentation (2025 feature)
+- Disable **public network access** on PaaS resources where possible
+- Use **Azure Firewall** or **Azure DDoS Protection** for perimeter security
+
+**Secrets Management:**
+- Store all secrets, keys, and certificates in **Azure Key Vault**
+- Use **Key Vault RBAC** model (not legacy access policies)
+- Enable **Key Vault soft-delete** and purge protection
+- Integrate **Managed Identities** for application authentication
+- Use **Azure Key Vault references** for App Service/Container Apps
+
+**Monitoring & Compliance:**
+- Create **Log Analytics workspaces** per business unit or environment
+- Use **diagnostic settings** to forward logs to Log Analytics
+- Enable **Microsoft Defender for Cloud** tier
+- Implement **Azure Policy** for guardrails and compliance
+- Configure **alert rules** for security events
 
 #### Interview Topics
 
-- Why Managed Identity is preferred over secrets
-- Azure networking isolation mechanisms
-- RBAC vs traditional IAM
-- Preventing credential leakage
-- Zero-trust implementation
+| Question | Key Points |
+|----------|------------|
+| Why Managed Identity over secrets? | No credential management, automatic rotation, no secrets in code |
+| Private Endpoint vs Service Endpoint | PE: resource-level access, NSG can't filter; SE: subnet-level, NSG compatible |
+| RBAC vs Azure AD roles | RBAC for Azure resources, Azure AD roles for directory management |
+| Network Security Perimeter | New 2025 feature for traffic filtering across VNets and Private Endpoints |
+| Zero-trust implementation | Verify explicitly, use least privilege, assume breach |
+| Preventing credential leakage | Key Vault, Managed Identities, scan repos, Microsoft Defender |
 
 ---
 
