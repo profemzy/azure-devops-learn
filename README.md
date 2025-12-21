@@ -304,30 +304,80 @@ PhaseX/
 
 ### Phase 4: Infrastructure as Code (Terraform)
 
-> **Objective**: Treat infrastructure as versioned, reviewable software.
+> **Objective**: Treat infrastructure as versioned, reviewable software using modern Terraform patterns with AzureRM v4.x.
 
 | Aspect | Details |
 |--------|---------|
 | **Duration** | 6-8 hours |
-| **Prerequisites** | Phase 3 complete |
+| **Prerequisites** | Phase 3 complete, Azure subscription with owner access |
 
 #### Core Competencies
 
 | Skill | Description |
 |-------|-------------|
-| Terraform Basics | Providers, resources, state |
+| Provider Configuration | AzureRM v4.x, version constraints, OIDC auth |
+| Authentication | Managed Identity (no service principals) |
+| State Management | Remote backend with Blob Storage + state locking |
+| Resource Management | RG, VNet, NSG, Private Endpoints |
+| Secrets Management | Key Vault integration, RBAC access |
 | Module Design | Reusable, parameterized modules |
-| State Management | Remote backends, locking |
-| Environment Strategy | Dev/staging/production separation |
-| Drift Detection | Identifying configuration drift |
+
+#### Learning Content
+
+| Guide | Topics |
+|-------|--------|
+| `Phase4/01-terraform-basics-provider.md` | Provider setup, Managed Identity auth, AzureRM v4.x |
+| `Phase4/02-remote-state-backend.md` | Blob Storage backend with state locking |
+| `Phase4/03-azure-resources.md` | Resource Groups, VNets, NSGs, Private Endpoints |
+| `Phase4/04-keyvault-monitoring.md` | Key Vault, Managed Identities, monitoring integration |
+
+#### Professional Deliverables
+
+- [ ] AzureRM provider v4.x configuration with OIDC authentication
+- [ ] Remote backend (Blob Storage) with state locking
+- [ ] Resource Groups, VNets, subnets via Terraform
+- [ ] NSGs with security rules and service tags
+- [ ] Private Endpoints and Private DNS Zones
+- [ ] Key Vault with RBAC and secrets
+- [ ] User-assigned Managed Identities
+- [ ] Log Analytics workspace with diagnostic settings
+- [ ] Reusable module structure
+
+#### 2025 Terraform Best Practices
+
+**Provider & Authentication:**
+- Use **AzureRM Provider v4.x** with Terraform 1.x
+- Prefer **Managed Identity/OIDC** over service principals
+- Use `use_oidc = true` in provider configuration
+- Set explicit version constraints (`~> 4.0`)
+
+**State Management:**
+- Use **Azure Blob Storage** as remote backend
+- Enable **state locking** via blob leases
+- Separate state by environment (dev/stg/prod)
+- Enable **blob versioning** for recovery
+
+**Module Design:**
+- Create reusable modules for common patterns
+- Use `count` or `for_each` for multiple instances
+- Implement `depends_on` for implicit dependencies
+- Use `lifecycle` blocks for resource protection
+
+**Security:**
+- Use **Key Vault** for secrets (not tfvars)
+- Enable **soft-delete** and **purge protection**
+- Use **Private Endpoints** for PaaS resources
+- Implement **least privilege** with RBAC
 
 #### Interview Topics
 
-- Why remote state is critical
-- Terraform drift detection
-- Managing breaking changes
-- How IaC improves reliability
-- State file security
+| Question | Key Points |
+|----------|------------|
+| Why Managed Identity over service principals? | No secrets, automatic rotation, works on Azure VMs |
+| How does Azure Blob Storage provide state locking? | Blob leases prevent concurrent modifications |
+| What's the difference between local and remote state? | Remote enables collaboration, locking, durability |
+| How do you recover from corrupted state? | Versioning, import command, refresh |
+| Why use Private Endpoints in Terraform? | Keep traffic on Azure backbone, security compliance |
 
 ---
 
