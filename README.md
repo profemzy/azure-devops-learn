@@ -38,17 +38,30 @@ The guide is divided into 7 phases, each building on the previous, plus a capsto
 
 #### Phase 1: Linux Systems & Automation
 - **Professional Objective**: Operate Linux systems as production infrastructure, not personal machines.
-- **Core Competencies**: Secure access control, service lifecycle management, log-driven troubleshooting, safe automation practices.
-- **Professional Deliverables**: Hardened Linux server, troubleshooting runbook, Bash automation scripts.
-- **Industry Alignment**: RHCSA fundamentals, cloud VM operational expectations.
-- **Interview Reinforcement**: Explain why SSH hardening is mandatory, how systemd differs from init systems, how exit codes affect automation, how you diagnose production outages.
+- **Core Competencies**: File management, permissions, user administration, process monitoring, package management, Bash scripting, systemd services, log analysis, secure SSH configuration.
+- **Topics Covered**:
+  - Linux Basics: Navigation, file permissions, user/group management, processes, packages
+  - Shell Scripting: Variables, control flow, functions, error handling, practical automation scripts
+  - System Administration: Service lifecycle (systemd), log management, disk/memory monitoring
+  - SSH Hardening: Password authentication disable, root login restriction, idle timeout configuration
+- **Professional Deliverables**: Hardened Linux server, system health check script, backup automation script, log analyzer script, documented runbook.
+- **Industry Alignment**: RHCSA fundamentals, cloud VM operational expectations, production server hardening.
+- **Interview Reinforcement**: Explain why SSH hardening is mandatory, how systemd differs from init systems, how exit codes affect automation, how you diagnose production outages, difference between hard/soft links, securing a Linux server.
+- **Guides**:
+  - `Phase1/linux-basics-guide.md` - Complete Linux fundamentals and shell scripting
+  - `Phase1/ssh-hardening-guide.md` - SSH security configuration
+  - `Phase1/azure-vm-setup-guide.md` - Azure VM creation and connectivity
+  - `Phase1/cleanup-guide.md` - Resource cleanup procedures
 
 #### Phase 2: Git & Engineering Workflows
 - **Professional Objective**: Work safely in collaborative, multi-engineer environments.
-- **Core Competencies**: Branching strategies, pull request discipline, conflict resolution, change traceability.
-- **Professional Deliverables**: Clean Git history, documented PR workflow, conflict resolution examples.
-- **Industry Alignment**: GitHub Flow, trunk-based development.
+- **Core Competencies**: Branching strategies, pull request discipline, conflict resolution, change traceability, automated CI/CD validation.
+- **Professional Deliverables**: Clean Git history, documented PR workflow, GitHub Actions validation pipeline, conflict resolution examples.
+- **Industry Alignment**: GitHub Flow, trunk-based development, CI/CD best practices.
 - **Interview Reinforcement**: Explain why PRs reduce deployment risk, how Git history supports audits, when to rebase vs merge, how teams prevent broken main branches.
+- **Guides**:
+  - `Phase2/git-workflows-guide.md` - Complete Git workflow guide with labs
+  - `Phase2/scripts/` - Exercise and validation scripts
 
 #### Phase 3: Azure Fundamentals & Security
 - **Professional Objective**: Design secure, identity-first Azure environments.
