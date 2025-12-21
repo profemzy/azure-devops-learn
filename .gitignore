@@ -43,3 +43,4 @@ env/
 
 # Azure CLI
 ~/.azure/
+/.ai/mcp/mcp.json
