@@ -25,7 +25,7 @@ This guide explains how to clean up Azure resources created during Phase 1.
 
 ## Cleanup Options
 
-### Option 1: Using the Cleanup Script
+### Option 1: Using the Cleanup Script (Single VM)
 
 ```bash
 # Make the script executable
@@ -34,6 +34,23 @@ chmod +x scripts/cleanup.sh
 # Run the cleanup script
 ./scripts/cleanup.sh
 ```
+
+### Option 1b: Using the Multi-VM Cleanup Script
+
+If you created the 7-VM environment for Ansible testing:
+
+```bash
+# Make the script executable
+chmod +x scripts/cleanup-multi-vms.sh
+
+# Run the cleanup script
+./scripts/cleanup-multi-vms.sh
+```
+
+**Note:** This removes the `rg-devops-learn` resource group containing:
+- 7 VMs (bastion, web1-3, app1-2, db1)
+- Virtual network and subnets
+- 4 Network Security Groups
 
 The script will:
 1. Display what will be deleted
@@ -101,6 +118,8 @@ az vm list-ip-addresses \
 
 ## What Gets Deleted
 
+### Single VM Setup (devops-learn-rg)
+
 When you delete the resource group, the following are permanently removed:
 
 | Resource | Type |
@@ -112,6 +131,20 @@ When you delete the resource group, the following are permanently removed:
 | Public IP | IP Address |
 | Virtual Network | Network |
 | All data on the VM | - |
+
+### Multi-VM Setup (rg-devops-learn)
+
+When you delete this resource group, the following are permanently removed:
+
+| Resource | Type |
+|----------|------|
+| 7 VMs | bastion, web1, web2, web3, app1, app2, db1 |
+| 4 NSGs | nsg-bastion, nsg-web, nsg-app, nsg-db |
+| 1 VNet | vnet-devops-learn |
+| 4 Subnets | subnet-bastion, subnet-web, subnet-app, subnet-db |
+| 7 Public IPs | One per VM |
+| 7 NICs | One per VM |
+| All data on VMs | - |
 
 ---
 

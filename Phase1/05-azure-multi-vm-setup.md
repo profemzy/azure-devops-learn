@@ -277,7 +277,7 @@ echo "Creating bastion VM..."
 az vm create \
   --resource-group $RESOURCE_GROUP \
   --name bastion \
-  --image Ubuntu2204 \
+  --image Ubuntu2404 \
   --size Standard_B2s \
   --admin-username $ADMIN_USER \
   --ssh-key-values "$SSH_KEY" \
@@ -293,7 +293,7 @@ for i in 1 2 3; do
   az vm create \
     --resource-group $RESOURCE_GROUP \
     --name web$i \
-    --image Ubuntu2204 \
+    --image Ubuntu2404 \
     --size Standard_B2s \
     --admin-username $ADMIN_USER \
     --ssh-key-values "$SSH_KEY" \
@@ -310,7 +310,7 @@ for i in 1 2; do
   az vm create \
     --resource-group $RESOURCE_GROUP \
     --name app$i \
-    --image Ubuntu2204 \
+    --image Ubuntu2404 \
     --size Standard_B2s \
     --admin-username $ADMIN_USER \
     --ssh-key-values "$SSH_KEY" \
@@ -326,7 +326,7 @@ echo "Creating db1 VM..."
 az vm create \
   --resource-group $RESOURCE_GROUP \
   --name db1 \
-  --image Ubuntu2204 \
+  --image Ubuntu2404 \
   --size Standard_B2s \
   --admin-username $ADMIN_USER \
   --ssh-key-values "$SSH_KEY" \

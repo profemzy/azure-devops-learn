@@ -22,14 +22,23 @@ After completing labs:
 ```bash
 cd Phase1
 
-# Start with Linux basics
+# Step 1: Linux basics
 less 01-linux-basics-guide.md
 
-# When ready for SSH hardening
+# Step 2: SSH hardening
 less 02-ssh-hardening-guide.md
 
-# Set up Azure VM
+# Step 3: Single VM setup
 less 03-azure-vm-setup-guide.md
+
+# Step 4: Ansible configuration management
+less 04-ansible-guide.md
+
+# Step 5: Multi-VM setup (optional - for multi-node testing)
+less 05-azure-multi-vm-setup.md
+
+# When done: Clean up resources
+less 99-cleanup-guide.md
 ```
 
 ## Scripts

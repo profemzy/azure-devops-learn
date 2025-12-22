@@ -1527,26 +1527,53 @@ ansible-playbook azure-resources.yml
 │   ├── web1.example.com.yml
 │   └── db1.example.com.yml
 ├── roles/                   # Reusable roles
-│   ├── common/
-│   │   ├── tasks/
-│   │   │   └── main.yml
-│   │   ├── handlers/
-│   │   │   └── main.yml
-│   │   ├── templates/
-│   │   └── files/
-│   ├── nginx/
-│   │   ├── tasks/
-│   │   ├── handlers/
-│   │   └── templates/
-│   └── docker/
+│   └── common/
+│       ├── defaults/        # Default variables (lowest precedence)
+│       │   └── main.yml
+│       ├── files/           # Static files to copy
+│       ├── handlers/
+│       │   └── main.yml
+│       ├── meta/            # Role metadata
+│       │   └── main.yml
 │       ├── tasks/
-│       └── handlers/
+│       │   └── main.yml
+│       ├── templates/       # Jinja2 templates
+│       └── vars/            # Role variables (highest precedence)
+│           └── main.yml
 ├── playbooks/               # Playbook files
 │   ├── site.yml
 │   ├── web.yml
 │   └── db.yml
 └── requirements.yml         # Role dependencies
 ```
+
+### Example Role Structure
+
+```
+roles/nginx/
+├── defaults/
+│   └── main.yml             # nginx_port: 80, nginx_workers: auto
+├── files/
+│   └── nginx.conf           # Static config files
+├── handlers/
+│   └── main.yml             # handler: name=restart nginx
+├── tasks/
+│   ├── main.yml             # Main tasks
+│   ├── install.yml          # Installation subtasks
+│   └── configure.yml        # Configuration subtasks
+├── templates/
+│   └── nginx.conf.j2        # Template config
+└── vars/
+    └── main.yml             # OS-specific variables
+```
+
+### Role Execution Order
+1. `defaults/main.yml` - Default variables
+2. `vars/main.yml` - Role-specific variables (higher precedence)
+3. `tasks/main.yml` - Execute tasks
+4. `handlers/main.yml` - Handlers available
+5. `templates/` - Templates rendered
+6. `files/` - Static files copied
 
 ---
 

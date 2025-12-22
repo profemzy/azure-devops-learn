@@ -178,7 +178,7 @@ create_vm() {
     az vm create \
       --resource-group $RESOURCE_GROUP \
       --name $name \
-      --image Ubuntu2204 \
+      --image Ubuntu2404 \
       --size Standard_B2s \
       --admin-username $ADMIN_USER \
       --ssh-key-values "$SSH_KEY" \

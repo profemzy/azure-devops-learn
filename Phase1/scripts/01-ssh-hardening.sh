@@ -9,39 +9,24 @@ sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup.$(date +%Y%m%d)
 
 echo "[INFO] Applying SSH hardening..."
 
-# Disable password authentication (MANDATORY for production) - handle all variations
+# Disable password authentication (MANDATORY for production)
 sudo sed -i -E 's/^\s*#?\s*PasswordAuthentication\s+yes\s*$/PasswordAuthentication no/' /etc/ssh/sshd_config
 
-# Disable X11 forwarding (reduces attack surface) - handle all variations
+# Disable X11 forwarding (reduces attack surface)
 sudo sed -i -E 's/^\s*#?\s*X11Forwarding\s+yes\s*$/X11Forwarding no/' /etc/ssh/sshd_config
 
-# Limit authentication retries - handle all variations
+# Limit authentication retries
 sudo sed -i -E 's/^\s*#?\s*MaxAuthTries\s+[0-9]+\s*$/MaxAuthTries 3/' /etc/ssh/sshd_config
 
-# Set idle timeout - handle all variations
+# Set idle timeout (prevents orphaned sessions)
 sudo sed -i -E 's/^\s*#?\s*ClientAliveInterval\s+[0-9]+\s*$/ClientAliveInterval 300/' /etc/ssh/sshd_config
 sudo sed -i -E 's/^\s*#?\s*ClientAliveCountMax\s+[0-9]+\s*$/ClientAliveCountMax 2/' /etc/ssh/sshd_config
 
-# Disable root login - handle all variations with flexible spacing
-sudo sed -i -E 's/^\s*#?\s*PermitRootLogin\s+yes\s*$/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo sed -i -E 's/^\s*#?\s*PermitRootLogin\s+without-password\s*$/PermitRootLogin no/' /etc/ssh/sshd_config
-sudo sed -i -E 's/^\s*#?\s*PermitRootLogin\s+prohibit-password\s*$/PermitRootLogin no/' /etc/ssh/sshd_config
+# Disable root login
+sudo sed -i -E 's/^\s*#?\s*PermitRootLogin\s+(yes|without-password|prohibit-password)\s*$/PermitRootLogin no/' /etc/ssh/sshd_config
+
 # Ensure PermitRootLogin no is set (add if not present)
 grep -q "^PermitRootLogin no" /etc/ssh/sshd_config || echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config
-
-# Disable X11 forwarding (reduces attack surface)
-sudo sed -i 's/#X11Forwarding yes/X11Forwarding no/' /etc/ssh/sshd_config
-sudo sed -i 's/X11Forwarding yes/X11Forwarding no/' /etc/ssh/sshd_config
-
-# Limit authentication retries
-sudo sed -i 's/#MaxAuthTries 6/MaxAuthTries 3/' /etc/ssh/sshd_config
-sudo sed -i 's/MaxAuthTries [0-9]*/MaxAuthTries 3/' /etc/ssh/sshd_config
-
-# Set idle timeout (prevents orphaned sessions)
-sudo sed -i 's/#ClientAliveInterval 0/ClientAliveInterval 300/' /etc/ssh/sshd_config
-sudo sed -i 's/ClientAliveInterval [0-9]*/ClientAliveInterval 300/' /etc/ssh/sshd_config
-sudo sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 2/' /etc/ssh/sshd_config
-sudo sed -i 's/ClientAliveCountMax [0-9]*/ClientAliveCountMax 2/' /etc/ssh/sshd_config
 
 # Use a non-standard port (security through obscurity + reduces noise)
 # NOTE: Before doing this, ensure you can access via the new port
