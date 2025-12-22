@@ -151,6 +151,7 @@ PhaseX/
 | Shell Scripting | Variables, control flow, functions, error handling |
 | System Administration | systemd, journalctl, log management |
 | SSH Security | Hardening, key-based auth, access control |
+| Configuration Management | Ansible, idempotent automation, playbook design |
 
 #### Learning Content
 
@@ -159,7 +160,18 @@ PhaseX/
 | `01-linux-basics-guide.md` | Complete Linux fundamentals |
 | `02-ssh-hardening-guide.md` | SSH security configuration |
 | `03-azure-vm-setup-guide.md` | Azure VM creation |
+| `04-ansible-guide.md` | Ansible configuration management |
+| `05-azure-multi-vm-setup.md` | Multi-VM setup for Ansible multi-node testing |
 | `99-cleanup-guide.md` | Resource cleanup |
+
+#### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/01-ssh-hardening.sh` | Automated SSH hardening |
+| `scripts/04-validate-ansible.sh` | Ansible validation |
+| `scripts/create-multi-vms.sh` | Create 7 VMs for multi-node testing |
+| `scripts/cleanup.sh` | All Phase 1 cleanup (single & multi-VM) |
 
 #### Professional Deliverables
 
@@ -167,6 +179,10 @@ PhaseX/
 - [ ] System health check automation script
 - [ ] Backup and log analysis scripts
 - [ ] Documented troubleshooting runbook
+- [ ] Ansible playbook for VM configuration
+- [ ] Ansible inventory for development/production
+- [ ] Multi-VM environment (7 VMs) for multi-node testing
+- [ ] Multi-tier Ansible playbook (web, app, db tiers)
 
 #### Interview Topics
 

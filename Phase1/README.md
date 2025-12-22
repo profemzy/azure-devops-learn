@@ -11,6 +11,8 @@ Start with these guides in order:
 | 1 | `01-linux-basics-guide.md` | Linux fundamentals, shell scripting |
 | 2 | `02-ssh-hardening-guide.md` | SSH security configuration |
 | 3 | `03-azure-vm-setup-guide.md` | Azure VM creation |
+| 4 | `04-ansible-guide.md` | Ansible configuration management |
+| 5 | `05-azure-multi-vm-setup.md` | Multi-VM setup for Ansible testing |
 
 After completing labs:
 - Run `99-cleanup-guide.md` to clean up resources
@@ -35,7 +37,9 @@ less 03-azure-vm-setup-guide.md
 | Script | Purpose |
 |--------|---------|
 | `scripts/01-ssh-hardening.sh` | Automated SSH hardening |
-| `scripts/cleanup.sh` | Resource cleanup |
+| `scripts/04-validate-ansible.sh` | Ansible validation |
+| `scripts/create-multi-vms.sh` | Create 7 VMs for multi-node testing |
+| `scripts/cleanup.sh` | All Phase 1 cleanup (single & multi-VM) |
 
 ## Duration
 
