@@ -1,0 +1,53 @@
+---
+all:
+  children:
+    # Web tier
+    webservers:
+      hosts:
+        web1:
+          ansible_host: 10.0.1.4
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: web
+        web2:
+          ansible_host: 10.0.1.5
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: web
+        web3:
+          ansible_host: 10.0.1.6
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: web
+
+    # App tier
+    appservers:
+      hosts:
+        app1:
+          ansible_host: 10.0.2.4
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: app
+        app2:
+          ansible_host: 10.0.2.5
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: app
+
+    # Database tier
+    dbservers:
+      hosts:
+        db1:
+          ansible_host: 10.0.3.4
+          ansible_user: azureuser
+          ansible_ssh_private_key_file: ~/.ssh/azure-vm-key
+          app_tier: db
+
+  vars:
+    # 'environment' is a reserved word in Ansible, use 'app_environment' instead
+    app_environment: development
+    ntp_servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+    # Suppress Python interpreter discovery warning
+    ansible_python_interpreter: auto_legacy_silent
