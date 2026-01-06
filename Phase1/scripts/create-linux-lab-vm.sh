@@ -1,99 +1,141 @@
 #!/bin/bash
 # Phase 1: Create Single Linux Lab VM
 # Usage: ./create-linux-lab-vm.sh [location]
+#
+# Environment Variables:
+#   AZURE_VM_SIZE        - VM size (default: Standard_B1s)
+#   AZURE_VM_IMAGE       - VM image (default: Ubuntu2404)
+#   AZURE_ADMIN_USER     - Admin username (default: azureuser)
+#   AZURE_SSH_KEY_PATH   - SSH key path (default: ~/.ssh/azure-vm-key)
+#   AZURE_DO_NOT_PROMPT  - Skip confirmations (default: false)
 
 set -euo pipefail
 
-LOCATION="${1:-eastus}"
-RESOURCE_GROUP="devops-learn-rg"
-VM_NAME="devops-learn-vm"
-ADMIN_USER="azureuser"
-SSH_KEY_PATH="$HOME/.ssh/azure-vm-key"
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "=== Linux Lab VM Setup ==="
-echo "Resource Group: $RESOURCE_GROUP"
-echo "VM Name: $VM_NAME"
-echo "Location: $LOCATION"
-echo ""
+# Source common functions
+source "${SCRIPT_DIR}/az-common.sh"
+
+# Configuration
+LOCATION="${1:-eastus}"
+RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-devops-learn-rg}"
+VM_NAME="${AZURE_VM_NAME:-devops-learn-vm}"
+ADMIN_USER="${AZURE_ADMIN_USER:-azureuser}"
+VM_SIZE="${AZURE_VM_SIZE:-Standard_B1s}"
+VM_IMAGE="${AZURE_VM_IMAGE:-Ubuntu2404}"
+SSH_KEY_PATH="${AZURE_SSH_KEY_PATH:-$HOME/.ssh/azure-vm-key}"
+
+display_header "Linux Lab VM Setup"
+
+# Validate location
+if ! validate_location "$LOCATION"; then
+    exit 1
+fi
 
 # Check prerequisites
-if ! command -v az &> /dev/null; then
-    echo "Error: Azure CLI is not installed."
+if ! check_prerequisites; then
     exit 1
 fi
 
-if ! az account show &>/dev/null; then
-    echo "Error: Not logged into Azure. Run 'az login' first."
+# Find or create SSH key
+if ! SSH_KEY_PATH=$(find_or_create_ssh_key "$SSH_KEY_PATH"); then
     exit 1
 fi
 
-# Check for SSH key pair
-if [ ! -f "${SSH_KEY_PATH}" ] || [ ! -f "${SSH_KEY_PATH}.pub" ]; then
-    echo "Error: SSH key pair not found at: ${SSH_KEY_PATH}"
-    echo ""
-    echo "Please generate an SSH key pair first:"
-    echo ""
-    echo "  ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key"
-    echo ""
-    echo "Or use your existing key by updating SSH_KEY_PATH in this script."
-    exit 1
-fi
-
-echo "Using existing SSH key: ${SSH_KEY_PATH}"
-
+log_info "Using SSH key: $SSH_KEY_PATH"
 SSH_KEY=$(cat "${SSH_KEY_PATH}.pub")
 
-# Create resource group
-echo "Creating resource group..."
-az group create \
-  --name $RESOURCE_GROUP \
-  --location $LOCATION \
-  --output none
+# Check if VM already exists
+if vm_exists "$RESOURCE_GROUP" "$VM_NAME"; then
+    log_warning "VM '$VM_NAME' already exists in resource group '$RESOURCE_GROUP'"
+    echo ""
+    if ! confirm_action "Do you want to continue and update the existing VM?"; then
+        log_info "Operation cancelled by user"
+        exit 0
+    fi
+    log_info "Proceeding with existing VM..."
+fi
+
+# Create resource group if it doesn't exist
+if ! resource_group_exists "$RESOURCE_GROUP"; then
+    log_info "Creating resource group: $RESOURCE_GROUP"
+    az group create \
+        --name "$RESOURCE_GROUP" \
+        --location "$LOCATION" \
+        --output none
+    log_success "Resource group created"
+else
+    log_info "Resource group already exists: $RESOURCE_GROUP"
+fi
 
 # Create VM
-echo "Creating VM..."
-az vm create \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --image Ubuntu2404 \
-  --size Standard_B1s \
-  --admin-username $ADMIN_USER \
-  --ssh-key-values "$SSH_KEY" \
-  --public-ip-sku Standard \
-  --tags "purpose=linux-lab" "environment=dev" \
-  --output none
+log_info "Creating VM: $VM_NAME"
+log_info "  Image: $VM_IMAGE"
+log_info "  Size: $VM_SIZE"
+log_info "  User: $ADMIN_USER"
+
+if az vm create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$VM_NAME" \
+    --image "$VM_IMAGE" \
+    --size "$VM_SIZE" \
+    --admin-username "$ADMIN_USER" \
+    --ssh-key-values "$SSH_KEY" \
+    --public-ip-sku Standard \
+    --tags "purpose=linux-lab" "environment=dev" "created-by=az-script" \
+    --output none 2>/dev/null; then
+    log_success "VM created successfully"
+else
+    if vm_exists "$RESOURCE_GROUP" "$VM_NAME"; then
+        log_warning "VM may already exist or is being updated"
+    else
+        log_error "Failed to create VM"
+        exit 1
+    fi
+fi
 
 # Open SSH port
-echo "Opening SSH port..."
+log_info "Opening SSH port (22)..."
 az vm open-port \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --port 22 \
-  --output none
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$VM_NAME" \
+    --port 22 \
+    --priority 100 \
+    --output none 2>/dev/null || log_warning "Failed to open SSH port (may already be open)"
 
 # Get VM details
-PUBLIC_IP=$(az vm show \
-  --resource-group $RESOURCE_GROUP \
-  --name $VM_NAME \
-  --show-details \
-  --query "publicIps" \
-  --output tsv)
+log_info "Retrieving VM details..."
+PUBLIC_IP=$(get_vm_public_ip "$RESOURCE_GROUP" "$VM_NAME")
 
-echo ""
-echo "=== Setup Complete ==="
-echo ""
-echo "VM Details:"
-echo "  Name: $VM_NAME"
-echo "  Resource Group: $RESOURCE_GROUP"
+if [ -z "$PUBLIC_IP" ]; then
+    log_error "Failed to retrieve public IP"
+    exit 1
+fi
+
+# Display success message
+display_header "Setup Complete"
+display_resource_summary "$RESOURCE_GROUP" "$LOCATION"
+
+echo "Connection Details:"
 echo "  Public IP: $PUBLIC_IP"
-echo "  Admin User: $ADMIN_USER"
+echo "  SSH Command:"
+echo "    ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
 echo ""
-echo "Connect to your VM:"
-echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
+
+echo "Quick Start Commands:"
 echo ""
-echo "Next steps:"
-echo "  1. SSH into your VM to practice Linux commands"
-echo "  2. Upload scripts using scp:"
-echo "     scp -i ${SSH_KEY_PATH} scripts/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
-echo "  3. Run the SSH hardening script:"
-echo "     ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'chmod +x ~/01-ssh-hardening.sh && sudo ~/01-ssh-hardening.sh'"
+echo "1. Connect to your VM:"
+echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
+echo ""
+echo "2. Upload scripts to VM:"
+echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+echo ""
+echo "3. Run SSH hardening (from your local machine):"
+echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
+echo ""
+echo "4. Clean up resources when done:"
+echo "   ./cleanup-linux-lab-vm.sh"
+echo ""
+
+log_success "VM is ready for use!"
