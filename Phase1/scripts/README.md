@@ -321,8 +321,9 @@ AZURE_DRY_RUN=true ./cleanup-phase1.sh
 
 1. **SSH Key Authentication**
    - Key-based auth only (no password)
-   - Auto-creates ED25519 keys if missing
-   - Falls back to existing default keys
+   - Auto-creates ED25519 keys if missing with proper permissions (600/644)
+   - Falls back to existing default keys (id_ed25519, id_rsa, id_ecdsa)
+   - Clear error messages if key creation fails
 
 2. **Network Security**
    - NSGs with minimal required ports
@@ -377,6 +378,15 @@ The script is idempotent - you can:
 Check SSH key path:
 ```bash
 ls -l ~/.ssh/azure-vm-key*
+```
+
+If SSH key doesn't exist, the script will auto-create it, or you can:
+```bash
+# Generate new key
+ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key
+
+# Or use existing key
+AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-linux-lab-vm.sh
 ```
 
 Verify VM is running:

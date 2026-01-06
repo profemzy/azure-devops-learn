@@ -39,11 +39,33 @@ if ! check_prerequisites; then
 fi
 
 # Find or create SSH key
+log_info "Checking for SSH keys..."
 if ! SSH_KEY_PATH=$(find_or_create_ssh_key "$SSH_KEY_PATH"); then
+    log_error "Failed to set up SSH key"
+    echo ""
+    echo "SSH key is required for VM access. You can:"
+    echo ""
+    echo "1. Generate a new SSH key:"
+    echo "   ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key"
+    echo ""
+    echo "2. Use an existing key:"
+    echo "   AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-linux-lab-vm.sh"
+    echo ""
+    echo "3. Let the script create one automatically:"
+    echo "   ./create-linux-lab-vm.sh"
+    echo ""
     exit 1
 fi
 
-log_info "Using SSH key: $SSH_KEY_PATH"
+# Check what we got
+if [ ! -f "$SSH_KEY_PATH" ] || [ ! -f "${SSH_KEY_PATH}.pub" ]; then
+    log_error "SSH key not found at: $SSH_KEY_PATH"
+    echo ""
+    echo "Please ensure the SSH key exists or let the script create one."
+    exit 1
+fi
+
+log_success "Using SSH key: $SSH_KEY_PATH"
 SSH_KEY=$(cat "${SSH_KEY_PATH}.pub")
 
 # Check if VM already exists

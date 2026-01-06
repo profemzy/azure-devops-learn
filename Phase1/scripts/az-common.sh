@@ -94,7 +94,6 @@ find_or_create_ssh_key() {
 
     # Check if key pair exists
     if [ -f "$key_path" ] && [ -f "${key_path}.pub" ]; then
-        log_info "Using existing SSH key: $key_path"
         echo "$key_path"
         return 0
     fi
@@ -104,20 +103,24 @@ find_or_create_ssh_key() {
     for key in "${default_keys[@]}"; do
         local default_path="$HOME/.ssh/$key"
         if [ -f "$default_path" ] && [ -f "${default_path}.pub" ]; then
-            log_info "Using existing SSH key: $default_path"
             echo "$default_path"
             return 0
         fi
     done
 
+    # Check if .ssh directory exists
+    if [ ! -d "$HOME/.ssh" ]; then
+        mkdir -p "$HOME/.ssh" 2>/dev/null || return 1
+        chmod 700 "$HOME/.ssh" 2>/dev/null || true
+    fi
+
     # Create new key
-    log_warning "No SSH key found. Creating new key at: $key_path"
     if ssh-keygen -t ed25519 -f "$key_path" -N "" -q 2>/dev/null; then
-        log_success "SSH key created: $key_path"
+        chmod 600 "$key_path" 2>/dev/null || true
+        chmod 644 "${key_path}.pub" 2>/dev/null || true
         echo "$key_path"
         return 0
     else
-        log_error "Failed to create SSH key"
         return 1
     fi
 }
