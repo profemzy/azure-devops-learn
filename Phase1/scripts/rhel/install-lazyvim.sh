@@ -485,6 +485,11 @@ __set_prompt() {
   PS1="${status_color}➜${reset} ${cyan}\u@\h${reset}:${yellow}\w${reset}${green}$(__git_branch)${reset} "
 }
 
+
+# Apply immediately for interactive shells (so the first prompt is updated)
+case $- in
+  *i*) __set_prompt ;;
+esac
 PROMPT_COMMAND=__set_prompt
 PROMPT_EOF
 
