@@ -338,12 +338,9 @@ if [ "$INSTALL_EXTRAS" = "true" ]; then
     log_info "Checking Rust toolchain..."
     if ! command -v cargo &> /dev/null; then
         log_info "Installing Rust (for Rust LSP support)..."
-        if [ "$AS_ROOT" = true ]; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >/dev/null 2>&1
-            source "$HOME/.cargo/env" 2>/dev/null || true
-        else
-            sudo -u "$SUDO_USER" curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >/dev/null 2>&1 || true
-        fi
+        # Always install rustup as the target user (even when running under sudo).
+        # NOTE: `SUDO_USER` may be unset if not invoked via sudo; avoid referencing it.
+        run_as_target_user "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y >/dev/null 2>&1 || true"
         log_success "Rust toolchain installed"
     else
         RUST_VERSION=$(rustc --version 2>/dev/null || echo "unknown")
@@ -457,6 +454,7 @@ fi
 # Install lazygit (optional but recommended)
 log_info "Checking lazygit installation..."
 INSTALL_LAZYGIT="${INSTALL_LAZYGIT:-true}"
+REQUIRE_LAZYGIT="${REQUIRE_LAZYGIT:-true}"
 if [ "$INSTALL_LAZYGIT" = "true" ]; then
     if ! command -v lazygit &> /dev/null; then
         log_info "Installing lazygit..."
@@ -472,14 +470,19 @@ if [ "$INSTALL_LAZYGIT" = "true" ]; then
             LAZYGIT_ARCH="$(detect_arch)"
             cd /tmp
 
-            LAZYGIT_URL="$(curl -Ls "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
+            LAZYGIT_URL="$(curl -Ls \
+                -H 'Accept: application/vnd.github+json' \
+                -H 'User-Agent: azure-devops-learn-lazyvim-installer' \
+                "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
                 | grep -E "browser_download_url.*Linux_${LAZYGIT_ARCH}\\.tar\\.gz" \
                 | cut -d '"' -f 4 \
                 | head -n 1 \
                 || true)"
 
             if [ -z "${LAZYGIT_URL:-}" ]; then
-                log_warning "Failed to get lazygit download URL; skipping lazygit installation"
+                log_warning "Failed to get lazygit download URL (GitHub API may be rate-limited)."
+                log_warning "You can try again later or install manually:"
+                log_warning "  https://github.com/jesseduffield/lazygit#installation"
             else
                 if curl -fL -o lazygit.tar.gz "$LAZYGIT_URL" >/dev/null 2>&1; then
                     LAZYGIT_BIN_PATH=$(tar -tzf lazygit.tar.gz 2>/dev/null | grep -E '(^|/)lazygit$' | head -n 1 || true)
@@ -510,6 +513,12 @@ if [ "$INSTALL_LAZYGIT" = "true" ]; then
         fi
     else
         log_info "lazygit already installed"
+    fi
+
+    # If you want lazygit present for your workflow, enforce it here.
+    if [ "$REQUIRE_LAZYGIT" = "true" ] && ! command -v lazygit &> /dev/null; then
+        log_error "lazygit is required (REQUIRE_LAZYGIT=true) but could not be installed"
+        exit 1
     fi
 else
     log_info "INSTALL_LAZYGIT=false; skipping lazygit"
