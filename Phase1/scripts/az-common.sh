@@ -155,6 +155,62 @@ wait_for_vm() {
     return 0
 }
 
+# Wait for SSH to be ready on VM
+wait_for_ssh() {
+    local ssh_key=$1
+    local admin_user=$2
+    local public_ip=$3
+    local max_wait=${4:-180}  # Default 3 minutes
+    local elapsed=0
+
+    log_info "Waiting for SSH to be ready on ${public_ip}..."
+
+    while [ $elapsed -lt $max_wait ]; do
+        if ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+            -o BatchMode=yes -o "ServerAliveInterval=5" -o "ServerAliveCountMax=1" \
+            "${admin_user}@${public_ip}" "echo 'SSH ready'" >/dev/null 2>&1; then
+            log_success "SSH is ready"
+            return 0
+        fi
+
+        sleep 5
+        elapsed=$((elapsed + 5))
+        echo -n "."
+    done
+
+    echo ""
+    log_error "SSH did not become ready within ${max_wait} seconds"
+    return 1
+}
+
+# Wait for cloud-init to complete
+wait_for_cloud_init() {
+    local ssh_key=$1
+    local admin_user=$2
+    local public_ip=$3
+    local max_wait=${4:-180}  # Default 3 minutes
+    local elapsed=0
+
+    log_info "Waiting for cloud-init to complete..."
+
+    while [ $elapsed -lt $max_wait ]; do
+        if ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+            -o BatchMode=yes "${admin_user}@${public_ip}" \
+            "test -f /var/lib/cloud/instance/boot-finished 2>/dev/null || echo 'pending'" >/dev/null 2>&1; then
+            log_success "Cloud-init completed"
+            return 0
+        fi
+
+        sleep 5
+        elapsed=$((elapsed + 5))
+        echo -n "."
+    done
+
+    echo ""
+    log_warning "Cloud-init may still be running (continuing anyway)"
+    return 0
+}
+
 # Get public IP of VM
 get_vm_public_ip() {
     local rg_name=$1
@@ -238,4 +294,116 @@ display_resource_summary() {
         echo "  VMs: $vm_count"
     fi
     echo ""
+}
+
+# Run script on remote VM
+run_script_on_vm() {
+    local ssh_key=$1
+    local admin_user=$2
+    public_ip=$3
+    local script_path=$4
+    local timeout_duration=${5:-600}  # Default 10 minutes
+
+    if [ ! -f "$script_path" ]; then
+        log_error "Script not found: $script_path"
+        return 1
+    fi
+
+    log_info "Running script on VM: $(basename "$script_path")"
+
+    # Check if timeout command is available (not on macOS by default)
+    if command -v timeout &> /dev/null; then
+        # Use timeout if available
+        if timeout "$timeout_duration" ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+            -o "ServerAliveInterval=15" -o "ServerAliveCountMax=3" \
+            "${admin_user}@${public_ip}" \
+            "bash -s" < "$script_path"; then
+            log_success "Script executed successfully"
+            return 0
+        else
+            local exit_code=$?
+            if [ $exit_code -eq 124 ]; then
+                log_error "Script execution timed out after ${timeout_duration} seconds"
+            else
+                log_error "Script execution failed with exit code $exit_code"
+            fi
+            return 1
+        fi
+    else
+        # Fallback: run without timeout command (macOS)
+        log_warning "timeout command not available, running without timeout..."
+        if ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+            -o "ServerAliveInterval=15" -o "ServerAliveCountMax=3" \
+            "${admin_user}@${public_ip}" \
+            "bash -s" < "$script_path"; then
+            log_success "Script executed successfully"
+            return 0
+        else
+            local exit_code=$?
+            log_error "Script execution failed with exit code $exit_code"
+            return 1
+        fi
+    fi
+}
+
+# Verify LazyVim installation on remote VM
+verify_lazyvim_installation() {
+    local ssh_key=$1
+    local admin_user=$2
+    local public_ip=$3
+
+    log_info "Verifying LazyVim installation..."
+
+    # Check if nvim is installed
+    if ! ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+        "${admin_user}@${public_ip}" "command -v nvim" >/dev/null 2>&1; then
+        log_error "Neovim not found on VM"
+        return 1
+    fi
+
+    # Check if LazyVim config exists
+    if ! ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+        "${admin_user}@${public_ip}" "test -d ~/.config/nvim" >/dev/null 2>&1; then
+        log_error "LazyVim configuration not found"
+        return 1
+    fi
+
+    # Check if plugins were installed
+    local plugin_count
+    plugin_count=$(ssh -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+        "${admin_user}@${public_ip}" \
+        "ls ~/.local/share/nvim/lazy/*/ 2>/dev/null | wc -l" 2>/dev/null || echo "0")
+
+    if [ "$plugin_count" -lt 10 ]; then
+        log_warning "LazyVim plugins may not be fully installed (found $plugin_count plugins)"
+    else
+        log_success "LazyVim verified with $plugin_count plugins"
+    fi
+
+    return 0
+}
+
+# Copy file to remote VM
+copy_to_vm() {
+    local ssh_key=$1
+    local admin_user=$2
+    local public_ip=$3
+    local local_path=$4
+    local remote_path=${5:-~/}
+
+    if [ ! -f "$local_path" ]; then
+        log_error "File not found: $local_path"
+        return 1
+    fi
+
+    log_info "Copying $(basename "$local_path") to VM..."
+
+    if scp -i "$ssh_key" -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+        "$local_path" "${admin_user}@${public_ip}:${remote_path}" 2>/dev/null; then
+        log_success "File copied successfully"
+        return 0
+    else
+        log_error "File copy failed"
+        return 1
+    fi
 }

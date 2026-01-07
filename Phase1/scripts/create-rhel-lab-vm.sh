@@ -1,13 +1,19 @@
 #!/bin/bash
-# Phase 1: Create Single Linux Lab VM
-# Usage: ./create-linux-lab-vm.sh [location]
+# Phase 1: Create Single RHEL-compatible Lab VM (AlmaLinux)
+# Usage: ./create-rhel-lab-vm.sh [location]
 #
 # Environment Variables:
-#   AZURE_VM_SIZE        - VM size (default: Standard_B1s)
-#   AZURE_VM_IMAGE       - VM image (default: Ubuntu2404)
+#   AZURE_VM_SIZE        - VM size (default: Standard_B4ms)
+#   AZURE_VM_IMAGE       - VM image (default: almalinux:almalinux-x86_64:9-gen2:latest)
 #   AZURE_ADMIN_USER     - Admin username (default: azureuser)
 #   AZURE_SSH_KEY_PATH   - SSH key path (default: ~/.ssh/azure-vm-key)
+#   AZURE_INSTALL_LAZYVIM - Auto-install LazyVim (default: true)
 #   AZURE_DO_NOT_PROMPT  - Skip confirmations (default: false)
+#
+# Available AlmaLinux Images:
+#   almalinux:almalinux-x86_64:9-gen2:latest    (AlmaLinux 9, Gen2, recommended)
+#   almalinux:almalinux-x86_64:8-gen2:latest    (AlmaLinux 8, Gen2)
+#   almalinux:almalinux-x86_64:10-gen2:latest   (AlmaLinux 10, Gen2, latest)
 
 set -euo pipefail
 
@@ -20,13 +26,13 @@ source "${SCRIPT_DIR}/az-common.sh"
 # Configuration
 LOCATION="${1:-eastus}"
 RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-devops-learn-rg}"
-VM_NAME="${AZURE_VM_NAME:-devops-learn-vm}"
+VM_NAME="${AZURE_VM_NAME:-devops-rhel-vm}"
 ADMIN_USER="${AZURE_ADMIN_USER:-azureuser}"
 VM_SIZE="${AZURE_VM_SIZE:-Standard_B4ms}"
-VM_IMAGE="${AZURE_VM_IMAGE:-Ubuntu2404}"
+VM_IMAGE="${AZURE_VM_IMAGE:-almalinux:almalinux-x86_64:9-gen2:latest}"
 SSH_KEY_PATH="${AZURE_SSH_KEY_PATH:-$HOME/.ssh/azure-vm-key}"
 
-display_header "Linux Lab VM Setup"
+display_header "RHEL-compatible Lab VM Setup (AlmaLinux)"
 
 # Validate location
 if ! validate_location "$LOCATION"; then
@@ -49,10 +55,10 @@ if ! SSH_KEY_PATH=$(find_or_create_ssh_key "$SSH_KEY_PATH"); then
     echo "   ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key"
     echo ""
     echo "2. Use an existing key:"
-    echo "   AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-linux-lab-vm.sh"
+    echo "   AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-rhel-lab-vm.sh"
     echo ""
     echo "3. Let the script create one automatically:"
-    echo "   ./create-linux-lab-vm.sh"
+    echo "   ./create-rhel-lab-vm.sh"
     echo ""
     exit 1
 fi
@@ -93,7 +99,7 @@ fi
 
 # Create VM
 log_info "Creating VM: $VM_NAME"
-log_info "  Image: $VM_IMAGE"
+log_info "  Image: $VM_IMAGE (AlmaLinux 9 - RHEL-compatible)"
 log_info "  Size: $VM_SIZE"
 log_info "  User: $ADMIN_USER"
 
@@ -106,7 +112,7 @@ if az vm create \
     --admin-username "$ADMIN_USER" \
     --ssh-key-values "$SSH_KEY" \
     --public-ip-sku Standard \
-    --tags "purpose=linux-lab" "environment=dev" "created-by=az-script" \
+    --tags "purpose=rhel-lab" "environment=dev" "created-by=az-script" "os-family=rhel" \
     --output none 2>&1; then
     log_success "VM created successfully"
 else
@@ -118,7 +124,7 @@ else
         echo ""
         echo "Troubleshooting steps:"
         echo "1. Check if the image is available in your region:"
-        echo "   az vm image list --offer UbuntuServer --all | grep $VM_IMAGE"
+        echo "   az vm image list --publisher almalinux --offer almalinux-x86_64 --all"
         echo ""
         echo "2. Verify your quota for $VM_SIZE in $LOCATION:"
         echo "   az quota show"
@@ -173,14 +179,13 @@ fi
 
 # Install LazyVim if requested
 INSTALL_LAZYVIM="${AZURE_INSTALL_LAZYVIM:-true}"
-LAZYGIT_INSTALL="${AZURE_INSTALL_LAZYGIT:-true}"
 
 if [ "$INSTALL_LAZYVIM" = "true" ]; then
     echo ""
     log_info "Installing LazyVim on VM..."
     echo ""
 
-    LAZYPATH="${SCRIPT_DIR}/install-lazyvim.sh"
+    LAZYPATH="${SCRIPT_DIR}/install-lazyvim-rhel.sh"
 
     if [ -f "$LAZYPATH" ]; then
         if run_script_on_vm "$SSH_KEY_PATH" "$ADMIN_USER" "$PUBLIC_IP" "$LAZYPATH" 600; then
@@ -208,10 +213,12 @@ if [ "$INSTALL_LAZYVIM" = "true" ]; then
             echo ""
             echo "Or run the installation script directly:"
             echo "  scp -i ${SSH_KEY_PATH} ${LAZYPATH} ${ADMIN_USER}@${PUBLIC_IP}:~/"
-            echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/install-lazyvim.sh'"
+            echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/install-lazyvim-rhel.sh'"
         fi
     else
         log_warning "LazyVim installer script not found at: $LAZYPATH"
+        echo ""
+        echo "Note: LazyVim installation on RHEL-compatible systems requires install-lazyvim-rhel.sh"
         echo ""
         echo "You can install LazyVim manually:"
         echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
@@ -234,19 +241,32 @@ echo ""
 echo "1. Connect to your VM:"
 echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
 echo ""
-echo "2. Start using LazyVim:"
-echo "   nvim                    # Open LazyVim"
-echo "   nvim +Lazy              # Manage plugins"
-echo "   :help lazyvim           # View documentation"
+
+if [ "$INSTALL_LAZYVIM" = "true" ]; then
+    echo "2. Start using LazyVim:"
+    echo "   nvim                    # Open LazyVim"
+    echo "   nvim +Lazy              # Manage plugins"
+    echo "   :help lazyvim           # View documentation"
+    echo ""
+    echo "3. Upload scripts to VM:"
+    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+    echo ""
+    echo "4. Run SSH hardening (from your local machine):"
+    echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
+else
+    echo "2. Install EPEL repository (for additional packages):"
+    echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'sudo dnf install -y epel-release'"
+    echo ""
+    echo "3. Install development tools:"
+    echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'sudo dnf groupinstall -y \"Development Tools\"'"
+    echo ""
+    echo "4. Upload scripts to VM:"
+    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+fi
 echo ""
-echo "3. Upload scripts to VM:"
-echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
-echo ""
-echo "4. Run SSH hardening (from your local machine):"
-echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
-echo ""
+
 echo "5. Clean up resources when done:"
 echo "   ./cleanup-phase1.sh"
 echo ""
 
-log_success "VM is ready for use with LazyVim pre-installed!"
+log_success "RHEL-compatible VM is ready!"
