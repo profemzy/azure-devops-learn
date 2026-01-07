@@ -451,6 +451,57 @@ else
     ln -sf "$HOME/.config/nvim/init.lua" "$HOME/.vimrc" 2>/dev/null || true
 fi
 
+# Configure a clean, professional Bash prompt for the target user (optional)
+# This is purely cosmetic and should never break the install.
+SETUP_BASH_PROMPT="${SETUP_BASH_PROMPT:-true}"
+if [ "$SETUP_BASH_PROMPT" = "true" ]; then
+    log_info "Configuring a professional bash prompt..."
+    run_as_target_user "mkdir -p '${TARGET_HOME}/.config'
+
+cat > '${TARGET_HOME}/.config/bash_prompt.sh' << 'PROMPT_EOF'
+# ~/.config/bash_prompt.sh
+# A clean, informative prompt (user@host:cwd) with git branch when available.
+
+__git_branch() {
+  command -v git >/dev/null 2>&1 || return 0
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+  local b
+  b=$(git branch --show-current 2>/dev/null)
+  [ -n "$b" ] && printf ' (%s)' "$b"
+}
+
+__set_prompt() {
+  local exit_code=$?
+  local reset='\[\e[0m\]'
+  local cyan='\[\e[36m\]'
+  local green='\[\e[32m\]'
+  local yellow='\[\e[33m\]'
+  local red='\[\e[31m\]'
+
+  local status_color="$green"
+  [ $exit_code -ne 0 ] && status_color="$red"
+
+  # user@host:cwd (branch)  ➜
+  PS1="${status_color}➜${reset} ${cyan}\u@\h${reset}:${yellow}\w${reset}${green}$(__git_branch)${reset} "
+}
+
+PROMPT_COMMAND=__set_prompt
+PROMPT_EOF
+
+# Ensure prompt file is sourced from ~/.bashrc only once.
+touch '${TARGET_HOME}/.bashrc'
+grep -q "bash_prompt.sh" '${TARGET_HOME}/.bashrc' 2>/dev/null || cat >> '${TARGET_HOME}/.bashrc' << 'BASHRC_EOF'
+
+# Load custom prompt
+if [ -f "$HOME/.config/bash_prompt.sh" ]; then
+  source "$HOME/.config/bash_prompt.sh"
+fi
+BASHRC_EOF
+" || true
+else
+    log_info "SETUP_BASH_PROMPT=false; skipping bash prompt config"
+fi
+
 # Install lazygit (optional but recommended)
 log_info "Checking lazygit installation..."
 INSTALL_LAZYGIT="${INSTALL_LAZYGIT:-true}"

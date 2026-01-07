@@ -264,6 +264,7 @@ The RHEL installer supports a few optional environment variables:
 | `INSTALL_EXTRA_LANGUAGES` | `true` | Install extra toolchains (Rust, Go) used by some LSP/tools |
 | `INSTALL_LAZYGIT` | `true` | Attempt to install `lazygit` |
 | `REQUIRE_LAZYGIT` | `true` | If `true`, fail the script if lazygit could not be installed |
+| `SETUP_BASH_PROMPT` | `true` | If `true`, install a clean bash prompt for the target user (updates `~/.bashrc`) |
 
 Examples:
 
