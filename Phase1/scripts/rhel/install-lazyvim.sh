@@ -483,6 +483,33 @@ if [ "$INSTALL_LAZYGIT" = "true" ]; then
                 log_warning "Failed to get lazygit download URL (GitHub API may be rate-limited)."
                 log_warning "You can try again later or install manually:"
                 log_warning "  https://github.com/jesseduffield/lazygit#installation"
+                log_info "Attempting fallback install via Go toolchain..."
+
+                # 3) Fallback to installing from source via Go. This avoids GitHub API calls
+                # and works well on RHEL/Alma where a lazygit RPM may not exist.
+                if ! command -v go >/dev/null 2>&1; then
+                    # Try to install a distro Go (may lag behind but works for `go install`).
+                    install_package "golang" || true
+                fi
+
+                if command -v go >/dev/null 2>&1; then
+                    # Install to user's GOPATH/bin, then move to /usr/local/bin
+                    run_as_target_user "go env -w GOPATH='${TARGET_HOME}/go' >/dev/null 2>&1 || true"
+                    run_as_target_user "go install github.com/jesseduffield/lazygit@latest >/dev/null 2>&1" || true
+
+                    if [ -x "${TARGET_HOME}/go/bin/lazygit" ]; then
+                        if [ "$AS_ROOT" = true ]; then
+                            mv "${TARGET_HOME}/go/bin/lazygit" /usr/local/bin/lazygit
+                        else
+                            sudo mv "${TARGET_HOME}/go/bin/lazygit" /usr/local/bin/lazygit
+                        fi
+                        log_success "lazygit installed (go install)"
+                    else
+                        log_warning "go install did not produce a lazygit binary; skipping"
+                    fi
+                else
+                    log_warning "Go toolchain not available; cannot install lazygit via go"
+                fi
             else
                 if curl -fL -o lazygit.tar.gz "$LAZYGIT_URL" >/dev/null 2>&1; then
                     LAZYGIT_BIN_PATH=$(tar -tzf lazygit.tar.gz 2>/dev/null | grep -E '(^|/)lazygit$' | head -n 1 || true)
