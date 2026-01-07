@@ -497,6 +497,16 @@ if [ -f "$HOME/.config/bash_prompt.sh" ]; then
   source "$HOME/.config/bash_prompt.sh"
 fi
 BASHRC_EOF
+
+# Ensure SSH/login shells load ~/.bashrc (many distros only read ~/.bash_profile on login)
+touch '${TARGET_HOME}/.bash_profile'
+grep -q "source ~/.bashrc" '${TARGET_HOME}/.bash_profile' 2>/dev/null || cat >> '${TARGET_HOME}/.bash_profile' << 'BASHPROFILE_EOF'
+
+# Load interactive bash config for login shells
+if [ -f "$HOME/.bashrc" ]; then
+  source "$HOME/.bashrc"
+fi
+BASHPROFILE_EOF
 " || true
 else
     log_info "SETUP_BASH_PROMPT=false; skipping bash prompt config"

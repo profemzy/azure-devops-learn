@@ -279,6 +279,16 @@ INSTALL_LAZYGIT=false ./rhel/install-lazyvim.sh
 INSTALL_EXTRA_LANGUAGES=false ./rhel/install-lazyvim.sh
 ```
 
+If your prompt doesn’t update immediately after install:
+
+```bash
+# Reload config in the current session
+source ~/.bashrc
+
+# Or start a new login shell (most similar to SSH login)
+exec bash -l
+```
+
 **Multi-VM (`create-multi-vms.sh`):**
 
 | Variable | Default | Description |
