@@ -71,6 +71,10 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
 | `ubuntu/install-lazyvim.sh` | Install LazyVim and dev tools on Ubuntu/Debian |
 | `rhel/install-lazyvim.sh` | Install LazyVim and dev tools on RHEL-compatible systems |
 
+> **LazyVim icons / glyphs**: For icons to render correctly (file icons, UI symbols),
+> configure your **local terminal font** to a **Nerd Font v3+** (e.g. *JetBrainsMono Nerd Font*).
+> Font rendering happens on your local machine, not on the VM.
+
 ## 📖 Usage
 
 ### Prerequisites
@@ -135,6 +139,9 @@ AZURE_VM_SIZE=Standard_B2s ./rhel/create-linux-lab-vm.sh
 
 # With custom AlmaLinux version
 AZURE_VM_IMAGE=AlmaLinux9 ./rhel/create-linux-lab-vm.sh
+
+# AlmaLinux 10 example
+AZURE_VM_IMAGE=AlmaLinux10 ./rhel/create-linux-lab-vm.sh
 ```
 
 **Output:**
@@ -247,6 +254,29 @@ AZURE_VM_SIZE=Standard_B4ms ./ubuntu/create-multi-vms.sh
 | `AZURE_SSH_KEY_PATH` | `~/.ssh/azure-vm-key` | SSH key path |
 | `AZURE_LOCATION` | `eastus` | Azure region |
 | `AZURE_INSTALL_LAZYVIM` | `true` | Auto-install LazyVim |
+
+#### LazyVim Installer (RHEL-compatible: `rhel/install-lazyvim.sh`)
+
+The RHEL installer supports a few optional environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `INSTALL_EXTRA_LANGUAGES` | `true` | Install extra toolchains (Rust, Go) used by some LSP/tools |
+| `INSTALL_LAZYGIT` | `true` | Attempt to install `lazygit` |
+| `REQUIRE_LAZYGIT` | `true` | If `true`, fail the script if lazygit could not be installed |
+
+Examples:
+
+```bash
+# Allow install to complete even if GitHub API is rate-limited and lazygit cannot be installed
+REQUIRE_LAZYGIT=false ./rhel/install-lazyvim.sh
+
+# Skip lazygit entirely
+INSTALL_LAZYGIT=false ./rhel/install-lazyvim.sh
+
+# Skip Rust/Go toolchains
+INSTALL_EXTRA_LANGUAGES=false ./rhel/install-lazyvim.sh
+```
 
 **Multi-VM (`create-multi-vms.sh`):**
 
