@@ -138,15 +138,21 @@ for rg in "${FOUND_RGS[@]}"; do
     # Count VMs
     vm_count=0
     vm_list=""
-    for vm_entry in "${FOUND_VMS[@]}"; do
-        vm_rg="${vm_entry%%:*}"
-        vm_name="${vm_entry##*:}"
 
-        if [ "$vm_rg" == "$rg" ]; then
-            vm_count=$((vm_count + 1))
-            vm_list="$vm_list  • $vm_name\n"
-        fi
-    done
+    # NOTE: On macOS /bin/bash is often Bash 3.2.
+    # With `set -u`, expanding an empty array like "${FOUND_VMS[@]}" can throw
+    # "unbound variable" on Bash 3.2. Guard with a length check first.
+    if [ ${#FOUND_VMS[@]} -gt 0 ]; then
+        for vm_entry in "${FOUND_VMS[@]}"; do
+            vm_rg="${vm_entry%%:*}"
+            vm_name="${vm_entry##*:}"
+
+            if [ "$vm_rg" == "$rg" ]; then
+                vm_count=$((vm_count + 1))
+                vm_list="$vm_list  • $vm_name\n"
+            fi
+        done
+    fi
 
     echo "  Virtual Machines: $vm_count"
     if [ -n "$vm_list" ]; then
@@ -284,20 +290,22 @@ for rg in "${SELECTED_RGS[@]}"; do
         # Delete only VMs in the RG
         log_info "Deleting VMs in: $rg (keeping resource group)"
 
-        for vm_entry in "${FOUND_VMS[@]}"; do
-            vm_rg="${vm_entry%%:*}"
-            vm_name="${vm_entry##*:}"
+        if [ ${#FOUND_VMS[@]} -gt 0 ]; then
+            for vm_entry in "${FOUND_VMS[@]}"; do
+                vm_rg="${vm_entry%%:*}"
+                vm_name="${vm_entry##*:}"
 
-            if [ "$vm_rg" == "$rg" ]; then
-                log_info "  Deleting VM: $vm_name"
-                az vm delete \
-                    --resource-group "$rg" \
-                    --name "$vm_name" \
-                    --yes \
-                    --no-wait \
-                    2>/dev/null || log_warning "  Failed to delete: $vm_name"
-            fi
-        done
+                if [ "$vm_rg" == "$rg" ]; then
+                    log_info "  Deleting VM: $vm_name"
+                    az vm delete \
+                        --resource-group "$rg" \
+                        --name "$vm_name" \
+                        --yes \
+                        --no-wait \
+                        2>/dev/null || log_warning "  Failed to delete: $vm_name"
+                fi
+            done
+        fi
 
         log_warning "  Resource group and other resources remain: $rg"
     fi
@@ -339,4 +347,3 @@ fi
 
 echo ""
 log_success "Phase 1 cleanup complete!"
-

@@ -29,7 +29,7 @@ RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-devops-learn-rg}"
 VM_NAME="${AZURE_VM_NAME:-devops-rhel-vm}"
 ADMIN_USER="${AZURE_ADMIN_USER:-azureuser}"
 VM_SIZE="${AZURE_VM_SIZE:-Standard_B4ms}"
-VM_IMAGE="${AZURE_VM_IMAGE:-almalinux:almalinux-x86_64:9-gen2:latest}"
+VM_IMAGE="${AZURE_VM_IMAGE:-almalinux:almalinux-x86_64:10-gen2:latest}"
 SSH_KEY_PATH="${AZURE_SSH_KEY_PATH:-$HOME/.ssh/azure-vm-key}"
 
 display_header "RHEL-compatible Lab VM Setup (AlmaLinux)"
@@ -99,7 +99,7 @@ fi
 
 # Create VM
 log_info "Creating VM: $VM_NAME"
-log_info "  Image: $VM_IMAGE (AlmaLinux 9 - RHEL-compatible)"
+log_info "  Image: $VM_IMAGE (AlmaLinux 10 - RHEL-compatible)"
 log_info "  Size: $VM_SIZE"
 log_info "  User: $ADMIN_USER"
 
