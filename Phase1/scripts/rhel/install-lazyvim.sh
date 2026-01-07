@@ -456,50 +456,63 @@ fi
 
 # Install lazygit (optional but recommended)
 log_info "Checking lazygit installation..."
-if ! command -v lazygit &> /dev/null; then
-    log_info "Installing lazygit..."
+INSTALL_LAZYGIT="${INSTALL_LAZYGIT:-true}"
+if [ "$INSTALL_LAZYGIT" = "true" ]; then
+    if ! command -v lazygit &> /dev/null; then
+        log_info "Installing lazygit..."
 
-    LAZYGIT_ARCH="$(detect_arch)"
-    cd /tmp
+        # 1) Try package manager first (fastest / most reliable when available)
+        if install_package "lazygit"; then
+            log_success "lazygit installed (dnf)"
+        else
+            # 2) Fallback to GitHub release tarball.
+            # IMPORTANT: With `set -euo pipefail`, a failing `grep` inside a pipeline
+            # would abort the whole script. Guard the pipeline with `|| true`.
 
-    # Get the latest release URL
-    LAZYGIT_URL=$(curl -Ls "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | \
-        grep -E "browser_download_url.*Linux_${LAZYGIT_ARCH}\\.tar\\.gz" | \
-        cut -d '"' -f 4 | head -n 1)
+            LAZYGIT_ARCH="$(detect_arch)"
+            cd /tmp
 
-    if [ -z "$LAZYGIT_URL" ]; then
-        log_warning "Failed to get lazygit download URL, skipping lazygit installation"
-    else
-        # Treat lazygit as optional: never fail the whole install if this step fails.
-        if curl -fL -o lazygit.tar.gz "$LAZYGIT_URL" >/dev/null 2>&1; then
-            # Some lazygit release tarballs contain the binary at the root,
-            # others may include it nested. Find the actual path inside the tar.
-            LAZYGIT_BIN_PATH=$(tar -tzf lazygit.tar.gz 2>/dev/null | grep -E '(^|/)lazygit$' | head -n 1 || true)
+            LAZYGIT_URL="$(curl -Ls "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" \
+                | grep -E "browser_download_url.*Linux_${LAZYGIT_ARCH}\\.tar\\.gz" \
+                | cut -d '"' -f 4 \
+                | head -n 1 \
+                || true)"
 
-            if [ -z "${LAZYGIT_BIN_PATH:-}" ]; then
-                log_warning "Could not find lazygit binary inside tarball; skipping"
+            if [ -z "${LAZYGIT_URL:-}" ]; then
+                log_warning "Failed to get lazygit download URL; skipping lazygit installation"
             else
-                if tar -xzf lazygit.tar.gz "$LAZYGIT_BIN_PATH" >/dev/null 2>&1; then
-                    chmod +x "$LAZYGIT_BIN_PATH" 2>/dev/null || true
+                if curl -fL -o lazygit.tar.gz "$LAZYGIT_URL" >/dev/null 2>&1; then
+                    LAZYGIT_BIN_PATH=$(tar -tzf lazygit.tar.gz 2>/dev/null | grep -E '(^|/)lazygit$' | head -n 1 || true)
 
-                    if [ "$AS_ROOT" = true ]; then
-                        mv "$LAZYGIT_BIN_PATH" /usr/local/bin/lazygit
+                    if [ -z "${LAZYGIT_BIN_PATH:-}" ]; then
+                        log_warning "Could not find lazygit binary inside tarball; skipping"
                     else
-                        sudo mv "$LAZYGIT_BIN_PATH" /usr/local/bin/lazygit
+                        if tar -xzf lazygit.tar.gz "$LAZYGIT_BIN_PATH" >/dev/null 2>&1; then
+                            chmod +x "$LAZYGIT_BIN_PATH" 2>/dev/null || true
+
+                            if [ "$AS_ROOT" = true ]; then
+                                mv "$LAZYGIT_BIN_PATH" /usr/local/bin/lazygit
+                            else
+                                sudo mv "$LAZYGIT_BIN_PATH" /usr/local/bin/lazygit
+                            fi
+
+                            log_success "lazygit installed (GitHub release)"
+                        else
+                            log_warning "Failed to extract lazygit; skipping installation"
+                        fi
                     fi
 
-                    log_success "lazygit installed"
+                    rm -f lazygit.tar.gz
                 else
-                    log_warning "Failed to extract lazygit; skipping installation"
+                    log_warning "Failed to download lazygit; skipping installation"
                 fi
             fi
-            rm -f lazygit.tar.gz
-        else
-            log_warning "Failed to download lazygit, skipping installation"
         fi
+    else
+        log_info "lazygit already installed"
     fi
 else
-    log_info "lazygit already installed"
+    log_info "INSTALL_LAZYGIT=false; skipping lazygit"
 fi
 
 echo ""
