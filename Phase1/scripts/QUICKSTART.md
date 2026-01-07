@@ -4,29 +4,29 @@
 
 ### Single VM (Linux Learning)
 ```bash
-# Create
-./create-linux-lab-vm.sh [location]
+# Create (Ubuntu)
+./ubuntu/create-linux-lab-vm.sh [location]
 
 # Clean up
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 ```
 
 ### Multi-VM (Ansible Testing)
 ```bash
-# Create
-./create-multi-vms.sh [location]
+# Create (Ubuntu)
+./ubuntu/create-multi-vms.sh [location]
 
 # Clean up
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 ```
 
 ### 🌟 Unified Cleanup (Handles Both!)
 ```bash
 # The smart way - detects everything automatically
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 
 # Dry run first
-AZURE_DRY_RUN=true ./cleanup-phase1.sh
+AZURE_DRY_RUN=true ./common/cleanup-phase1.sh
 ```
 
 ## 📋 Common Commands
@@ -67,29 +67,29 @@ az vm get-instance-view -g devops-learn-rg -n devops-learn-vm
 
 ```bash
 # Change location
-./create-linux-lab-vm.sh westus2
+./ubuntu/create-linux-lab-vm.sh westus2
 
 # Use bigger VM
-AZURE_VM_SIZE=Standard_B2s ./create-linux-lab-vm.sh
+AZURE_VM_SIZE=Standard_B2s ./ubuntu/create-linux-lab-vm.sh
 
 # Use Ubuntu 22.04
-AZURE_VM_IMAGE=Ubuntu2204 ./create-linux-lab-vm.sh
+AZURE_VM_IMAGE=Ubuntu2204 ./ubuntu/create-linux-lab-vm.sh
 
 # Custom resource group name
-AZURE_RESOURCE_GROUP=my-rg ./create-linux-lab-vm.sh
+AZURE_RESOURCE_GROUP=my-rg ./ubuntu/create-linux-lab-vm.sh
 
 # Keep resource group on cleanup
-AZURE_DELETE_RG=false ./cleanup-linux-lab-vm.sh
+AZURE_DELETE_RG=false ./common/cleanup-phase1.sh
 
 # Skip all prompts (CI/CD)
-AZURE_DO_NOT_PROMPT=true ./cleanup-linux-lab-vm.sh
+AZURE_DO_NOT_PROMPT=true ./common/cleanup-phase1.sh
 ```
 
 ## 🎯 Typical Workflow
 
 ```bash
 # 1. Create VM
-./create-linux-lab-vm.sh
+./ubuntu/create-linux-lab-vm.sh
 
 # 2. Get IP
 IP=$(az vm show -g devops-learn-rg -n devops-learn-vm -d --query publicIps -o tsv)
@@ -101,7 +101,7 @@ ssh -i ~/.ssh/azure-vm-key azureuser@$IP
 # Practice Linux commands, test Ansible, etc.
 
 # 5. Clean up
-./cleanup-linux-lab-vm.sh
+./common/cleanup-phase1.sh
 ```
 
 ## 🏗️ Multi-VM Architecture
@@ -123,7 +123,7 @@ Internet → Bastion (10.0.0.4)
 ~/.ssh/azure-vm-key
 
 # Or use your existing key
-AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-linux-lab-vm.sh
+AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./ubuntu/create-linux-lab-vm.sh
 
 # Manual key creation
 ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key -N ""
@@ -133,19 +133,19 @@ ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key -N ""
 
 ```bash
 # Smart cleanup - detects all Phase 1 resources
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 
 # Preview first (dry run)
-AZURE_DRY_RUN=true ./cleanup-phase1.sh
+AZURE_DRY_RUN=true ./common/cleanup-phase1.sh
 
 # Keep resource groups, delete only VMs
-AZURE_DELETE_RG=false ./cleanup-phase1.sh
+AZURE_DELETE_RG=false ./common/cleanup-phase1.sh
 
 # Skip confirmation (CI/CD)
-AZURE_DO_NOT_PROMPT=true ./cleanup-phase1.sh
+AZURE_DO_NOT_PROMPT=true ./common/cleanup-phase1.sh
 
 # Clean specific resource group
-AZURE_RESOURCE_GROUP=devops-learn-rg ./cleanup-phase1.sh
+AZURE_RESOURCE_GROUP=devops-learn-rg ./common/cleanup-phase1.sh
 ```
 
 **What the unified cleanup does:**
@@ -167,16 +167,16 @@ az login
 az account list-locations -o table
 
 # Use valid location
-./create-linux-lab-vm.sh westus2
+./ubuntu/create-linux-lab-vm.sh westus2
 ```
 
 ### Problem: "VM already exists"
 ```bash
 # Clean up first
-./cleanup-linux-lab-vm.sh
+./common/cleanup-phase1.sh
 
 # Or use different name
-AZURE_VM_NAME=my-vm ./create-linux-lab-vm.sh
+AZURE_VM_NAME=my-vm ./ubuntu/create-linux-lab-vm.sh
 ```
 
 ### Problem: Can't SSH
@@ -212,8 +212,8 @@ az vm list-usage -l eastus -o table
 # - Multi-VM (1x B4ms bastion + 6x B2s): ~$150-200/month
 #
 # Use smaller sizes to reduce costs:
-#   AZURE_VM_SIZE=Standard_B2s ./create-linux-lab-vm.sh  # ~$30/month
-#   AZURE_VM_SIZE=Standard_B1s ./create-linux-lab-vm.sh  # ~$10/month
+#   AZURE_VM_SIZE=Standard_B2s ./ubuntu/create-linux-lab-vm.sh  # ~$30/month
+#   AZURE_VM_SIZE=Standard_B1s ./ubuntu/create-linux-lab-vm.sh  # ~$10/month
 
 # Stop VM when not in use (save costs)
 az vm deallocate -g devops-learn-rg -n devops-learn-vm
@@ -222,14 +222,14 @@ az vm deallocate -g devops-learn-rg -n devops-learn-vm
 az vm start -g devops-learn-rg -n devops-learn-vm
 
 # Delete when done
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 ```
 
 ## 🎓 Learning Path
 
 1. **Start with single VM**
    ```bash
-   ./create-linux-lab-vm.sh
+   ./ubuntu/create-linux-lab-vm.sh
    ```
    - Practice Linux commands
    - Learn file management
@@ -241,14 +241,14 @@ az vm start -g devops-learn-rg -n devops-learn-vm
 
 3. **Scale to multi-VM**
    ```bash
-   ./create-multi-vms.sh
+./ubuntu/create-multi-vms.sh
    ```
    - Learn Ansible basics
    - Practice multi-server management
 
 4. **Clean up everything**
    ```bash
-   ./cleanup-phase1.sh
+   ./common/cleanup-phase1.sh
    ```
    - Script detects both single and multi-VM
    - One command cleans all

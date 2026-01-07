@@ -1,6 +1,6 @@
 #!/bin/bash
 # Phase 1: Create Single RHEL-compatible Lab VM (AlmaLinux)
-# Usage: ./create-rhel-lab-vm.sh [location]
+# Usage: ./create-linux-lab-vm.sh [location]
 #
 # Environment Variables:
 #   AZURE_VM_SIZE        - VM size (default: Standard_B4ms)
@@ -21,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source common functions
-source "${SCRIPT_DIR}/az-common.sh"
+source "${SCRIPT_DIR}/../common/az-common.sh"
 
 # Configuration
 LOCATION="${1:-eastus}"
@@ -185,7 +185,7 @@ if [ "$INSTALL_LAZYVIM" = "true" ]; then
     log_info "Installing LazyVim on VM..."
     echo ""
 
-    LAZYPATH="${SCRIPT_DIR}/install-lazyvim-rhel.sh"
+    LAZYPATH="${SCRIPT_DIR}/install-lazyvim.sh"
 
     if [ -f "$LAZYPATH" ]; then
         if run_script_on_vm "$SSH_KEY_PATH" "$ADMIN_USER" "$PUBLIC_IP" "$LAZYPATH" 600; then
@@ -213,18 +213,20 @@ if [ "$INSTALL_LAZYVIM" = "true" ]; then
             echo ""
             echo "Or run the installation script directly:"
             echo "  scp -i ${SSH_KEY_PATH} ${LAZYPATH} ${ADMIN_USER}@${PUBLIC_IP}:~/"
-            echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/install-lazyvim-rhel.sh'"
+            echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/install-lazyvim.sh'"
         fi
     else
         log_warning "LazyVim installer script not found at: $LAZYPATH"
         echo ""
-        echo "Note: LazyVim installation on RHEL-compatible systems requires install-lazyvim-rhel.sh"
+        echo "Note: LazyVim installation on RHEL-compatible systems requires install-lazyvim.sh"
         echo ""
         echo "You can install LazyVim manually:"
         echo "  ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP}"
         echo "  bash <(curl -s https://raw.githubusercontent.com/LazyVim/starter/bootstrap)"
     fi
 fi
+
+# Note: In the non-LazyVim path, users may still want to upload scripts.
 
 # Display success message
 display_header "Setup Complete"
@@ -249,7 +251,7 @@ if [ "$INSTALL_LAZYVIM" = "true" ]; then
     echo "   :help lazyvim           # View documentation"
     echo ""
     echo "3. Upload scripts to VM:"
-    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/../common/*.sh ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
     echo ""
     echo "4. Run SSH hardening (from your local machine):"
     echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
@@ -261,12 +263,15 @@ else
     echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'sudo dnf groupinstall -y \"Development Tools\"'"
     echo ""
     echo "4. Upload scripts to VM:"
-    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+    echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/../common/*.sh ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+    echo ""
+    echo "5. Run SSH hardening (from your local machine):"
+    echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
 fi
 echo ""
 
-echo "5. Clean up resources when done:"
-echo "   ./cleanup-phase1.sh"
+echo "6. Clean up resources when done:"
+echo "   ./scripts/common/cleanup-phase1.sh"
 echo ""
 
 log_success "RHEL-compatible VM is ready!"

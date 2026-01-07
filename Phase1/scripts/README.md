@@ -36,32 +36,40 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
 
 ## 🚀 Scripts Overview
 
+> **Structure note**: OS-specific scripts live in subfolders:
+> - `scripts/ubuntu/` (Ubuntu/Debian)
+> - `scripts/rhel/` (RHEL-compatible: Alma/Rocky/CentOS)
+>
+> Run OS-specific scripts from the subfolders:
+> - Ubuntu/Debian: `scripts/ubuntu/*.sh`
+> - RHEL-compatible: `scripts/rhel/*.sh`
+
 ### Shared Library
 
 | Script | Purpose |
 |--------|---------|
-| `az-common.sh` | Common functions for all scripts (do not run directly) |
+| `common/az-common.sh` | Common functions for all scripts (do not run directly) |
 
 ### Creation Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `create-linux-lab-vm.sh` | Create a single Ubuntu Linux VM for learning |
-| `create-rhel-lab-vm.sh` | Create a single RHEL-compatible VM (AlmaLinux) for learning |
-| `create-multi-vms.sh` | Create 7 VMs for Ansible testing (3-tier architecture) |
+| `ubuntu/create-linux-lab-vm.sh` | Create a single Ubuntu VM |
+| `rhel/create-linux-lab-vm.sh` | Create a single RHEL-compatible VM (AlmaLinux) for learning |
+| `ubuntu/create-multi-vms.sh` | Create 7 VMs for Ansible testing (3-tier architecture) |
 
 ### Cleanup Script
 
 | Script | Purpose |
 |--------|---------|
-| `cleanup-phase1.sh` | **🌟 UNIFIED INTELLIGENT CLEANUP** - Automatically detects and cleans up ALL Phase 1 resources |
+| `common/cleanup-phase1.sh` | **🌟 UNIFIED INTELLIGENT CLEANUP** - Automatically detects and cleans up ALL Phase 1 resources |
 
 ### Installation Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `install-lazyvim.sh` | Install LazyVim and development tools on Ubuntu/Debian |
-| `install-lazyvim-rhel.sh` | Install LazyVim and development tools on RHEL-compatible systems (AlmaLinux/Rocky/CentOS) |
+| `ubuntu/install-lazyvim.sh` | Install LazyVim and dev tools on Ubuntu/Debian |
+| `rhel/install-lazyvim.sh` | Install LazyVim and dev tools on RHEL-compatible systems |
 
 ## 📖 Usage
 
@@ -94,16 +102,16 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
 
 ```bash
 # Basic usage (defaults to eastus)
-./create-linux-lab-vm.sh
+./ubuntu/create-linux-lab-vm.sh
 
 # Specify location
-./create-linux-lab-vm.sh westus2
+./ubuntu/create-linux-lab-vm.sh westus2
 
 # With custom VM size
-AZURE_VM_SIZE=Standard_B2s ./create-linux-lab-vm.sh
+AZURE_VM_SIZE=Standard_B2s ./ubuntu/create-linux-lab-vm.sh
 
 # With custom image
-AZURE_VM_IMAGE=Ubuntu2204 ./create-linux-lab-vm.sh
+AZURE_VM_IMAGE=Ubuntu2204 ./ubuntu/create-linux-lab-vm.sh
 ```
 
 **Output:**
@@ -117,16 +125,16 @@ AZURE_VM_IMAGE=Ubuntu2204 ./create-linux-lab-vm.sh
 
 ```bash
 # Basic usage (defaults to eastus)
-./create-rhel-lab-vm.sh
+./rhel/create-linux-lab-vm.sh
 
 # Specify location
-./create-rhel-lab-vm.sh westus2
+./rhel/create-linux-lab-vm.sh westus2
 
 # With custom VM size
-AZURE_VM_SIZE=Standard_B2s ./create-rhel-lab-vm.sh
+AZURE_VM_SIZE=Standard_B2s ./rhel/create-linux-lab-vm.sh
 
 # With custom AlmaLinux version
-AZURE_VM_IMAGE=AlmaLinux9 ./create-rhel-lab-vm.sh
+AZURE_VM_IMAGE=AlmaLinux9 ./rhel/create-linux-lab-vm.sh
 ```
 
 **Output:**
@@ -142,23 +150,23 @@ AZURE_VM_IMAGE=AlmaLinux9 ./create-rhel-lab-vm.sh
 
 ```bash
 # Intelligent cleanup (detects all Phase 1 resources automatically)
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 
 # Preview what would be deleted (dry run)
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 # Then choose option based on what you want to delete
 
 # Keep resource groups, delete only VMs
-AZURE_DELETE_RG=false ./cleanup-phase1.sh
+AZURE_DELETE_RG=false ./common/cleanup-phase1.sh
 
 # Skip confirmation prompts (CI/CD)
-AZURE_DO_NOT_PROMPT=true ./cleanup-phase1.sh
+AZURE_DO_NOT_PROMPT=true ./common/cleanup-phase1.sh
 
 # Dry run mode - see what would be deleted without actually deleting
-AZURE_DRY_RUN=true ./cleanup-phase1.sh
+AZURE_DRY_RUN=true ./common/cleanup-phase1.sh
 
 # Clean up specific resource group only
-AZURE_RESOURCE_GROUP=devops-learn-rg ./cleanup-phase1.sh
+AZURE_RESOURCE_GROUP=devops-learn-rg ./common/cleanup-phase1.sh
 ```
 
 **The unified cleanup script will:**
@@ -171,13 +179,13 @@ AZURE_RESOURCE_GROUP=devops-learn-rg ./cleanup-phase1.sh
 
 ```bash
 # Basic usage
-./create-multi-vms.sh
+./ubuntu/create-multi-vms.sh
 
 # Specify location
-./create-multi-vms.sh westus2
+./ubuntu/create-multi-vms.sh westus2
 
 # With custom VM size
-AZURE_VM_SIZE=Standard_B4ms ./create-multi-vms.sh
+AZURE_VM_SIZE=Standard_B4ms ./ubuntu/create-multi-vms.sh
 ```
 
 **Architecture:**
@@ -200,7 +208,7 @@ AZURE_VM_SIZE=Standard_B4ms ./create-multi-vms.sh
 
 ```bash
 # The same unified cleanup script handles both single and multi-VM setups
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 
 # It will automatically detect:
 #   - Single VM setup (devops-learn-rg)
@@ -227,7 +235,7 @@ AZURE_VM_SIZE=Standard_B4ms ./create-multi-vms.sh
 | `AZURE_LOCATION` | `eastus` | Azure region |
 | `AZURE_INSTALL_LAZYVIM` | `true` | Auto-install LazyVim |
 
-**Single RHEL VM (`create-rhel-lab-vm.sh`):**
+**Single RHEL VM (`create-linux-lab-vm.sh`):**
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -283,13 +291,13 @@ az account list-locations -o table
 
 ```bash
 # 1. Create VM
-./create-linux-lab-vm.sh
+./ubuntu/create-linux-lab-vm.sh
 
 # 2. Connect and practice
 ssh -i ~/.ssh/azure-vm-key azureuser@<PUBLIC_IP>
 
 # 3. Clean up when done
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 # Choose option 1 to delete everything
 ```
 
@@ -297,7 +305,7 @@ ssh -i ~/.ssh/azure-vm-key azureuser@<PUBLIC_IP>
 
 ```bash
 # 1. Create multi-VM environment
-./create-multi-vms.sh
+./ubuntu/create-multi-vms.sh
 
 # 2. Get bastion IP
 BASTION_IP=$(az vm show -g rg-devops-learn -n bastion -d --query publicIps -o tsv)
@@ -329,7 +337,7 @@ EOF
 ansible all -i ~/ansible-inventory.ini -m ping
 
 # 7. Clean up
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 # Script will detect both single and multi-VM setups
 ```
 
@@ -337,26 +345,26 @@ ansible all -i ~/ansible-inventory.ini -m ping
 
 ```bash
 # Create environment once
-./create-linux-lab-vm.sh
+./ubuntu/create-linux-lab-vm.sh
 
 # Do work, test, etc.
 
 # Delete only VMs, keep resource group for faster recreation
-AZURE_DELETE_RG=false ./cleanup-phase1.sh
+AZURE_DELETE_RG=false ./common/cleanup-phase1.sh
 
 # Recreate VM (reuses resource group, faster)
-./create-linux-lab-vm.sh
+./ubuntu/create-linux-lab-vm.sh
 
 # When completely done, delete everything
-./cleanup-phase1.sh
-# Or: AZURE_DELETE_RG=true AZURE_DO_NOT_PROMPT=true ./cleanup-phase1.sh
+./common/cleanup-phase1.sh
+# Or: AZURE_DELETE_RG=true AZURE_DO_NOT_PROMPT=true ./common/cleanup-phase1.sh
 ```
 
 ### Workflow 4: Dry Run Before Deletion
 
 ```bash
 # Preview what would be deleted
-AZURE_DRY_RUN=true ./cleanup-phase1.sh
+AZURE_DRY_RUN=true ./common/cleanup-phase1.sh
 
 # Output shows:
 #   ✓ Single VM setup: devops-learn-rg (1 VM)
@@ -364,7 +372,7 @@ AZURE_DRY_RUN=true ./cleanup-phase1.sh
 #   DRY RUN MODE - No resources will be deleted
 
 # Then run actual cleanup
-./cleanup-phase1.sh
+./common/cleanup-phase1.sh
 ```
 
 ## 🛡️ Security Features
@@ -414,14 +422,14 @@ az account list-locations -o table
 
 Use a valid location:
 ```bash
-./create-linux-lab-vm.sh westus2
+./ubuntu/create-linux-lab-vm.sh westus2
 ```
 
 ### VM creation fails with "already exists"
 
 The script is idempotent - you can:
-1. Run cleanup: `./cleanup-linux-lab-vm.sh`
-2. Or use different name: `AZURE_VM_NAME=my-vm ./create-linux-lab-vm.sh`
+1. Run cleanup: `./common/cleanup-phase1.sh`
+2. Or use different name: `AZURE_VM_NAME=my-vm ./ubuntu/create-linux-lab-vm.sh`
 
 ### Can't SSH to VM
 
@@ -436,7 +444,7 @@ If SSH key doesn't exist, the script will auto-create it, or you can:
 ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key
 
 # Or use existing key
-AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./create-linux-lab-vm.sh
+AZURE_SSH_KEY_PATH=~/.ssh/id_ed25519 ./ubuntu/create-linux-lab-vm.sh
 ```
 
 Verify VM is running:
@@ -468,7 +476,7 @@ az login --service-principal \
   --tenant $TENANT_ID
 
 # Run scripts without prompts
-AZURE_DO_NOT_PROMPT=true ./create-linux-lab-vm.sh
+AZURE_DO_NOT_PROMPT=true ./common/cleanup-phase1.sh
 ```
 
 ### Custom VM Sizes
@@ -480,7 +488,7 @@ az vm list-sizes -l eastus -o table
 
 Use custom size:
 ```bash
-AZURE_VM_SIZE=Standard_D2s_v3 ./create-linux-lab-vm.sh
+AZURE_VM_SIZE=Standard_D2s_v3 ./ubuntu/create-linux-lab-vm.sh
 ```
 
 ### Custom Images
@@ -492,7 +500,7 @@ az vm image list -o table | grep Ubuntu
 
 Use custom image:
 ```bash
-AZURE_VM_IMAGE=Ubuntu2204 ./create-linux-lab-vm.sh
+AZURE_VM_IMAGE=Ubuntu2204 ./ubuntu/create-linux-lab-vm.sh
 ```
 
 ## 📝 Script Features Comparison

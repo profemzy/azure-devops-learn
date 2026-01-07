@@ -29,22 +29,19 @@ This guide explains how to clean up Azure resources created during Phase 1.
 
 ```bash
 # Make the script executable
-chmod +x scripts/cleanup.sh
+chmod +x scripts/common/cleanup-phase1.sh
 
 # Run the cleanup script
-./scripts/cleanup.sh
+./scripts/common/cleanup-phase1.sh
 ```
 
-### Option 1b: Using the Multi-VM Cleanup Script
+### Option 1b: Cleaning up the Multi-VM environment
 
-If you created the 7-VM environment for Ansible testing:
+If you created the 7-VM environment for Ansible testing, use the same unified cleanup script:
 
 ```bash
-# Make the script executable
-chmod +x scripts/cleanup-multi-vms.sh
-
-# Run the cleanup script
-./scripts/cleanup-multi-vms.sh
+chmod +x scripts/common/cleanup-phase1.sh
+./scripts/common/cleanup-phase1.sh
 ```
 
 **Note:** This removes the `rg-devops-learn` resource group containing:
@@ -199,7 +196,7 @@ VM_IP=$(az vm show \
 echo "VM IP: $VM_IP"
 
 # 3. Upload and run hardening script
-scp scripts/01-ssh-hardening.sh azureuser@$VM_IP:~/
+scp scripts/common/01-ssh-hardening.sh azureuser@$VM_IP:~/
 ssh azureuser@$VM_IP "chmod +x ~/01-ssh-hardening.sh && sudo ~/01-ssh-hardening.sh"
 ```
 

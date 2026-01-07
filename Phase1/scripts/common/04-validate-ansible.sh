@@ -195,3 +195,4 @@ else
     echo "  - Test connection: ansible all -m ping"
     exit 1
 fi
+

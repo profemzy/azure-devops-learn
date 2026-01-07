@@ -15,7 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source common functions
-source "${SCRIPT_DIR}/az-common.sh"
+source "${SCRIPT_DIR}/../common/az-common.sh"
 
 # Configuration
 LOCATION="${1:-eastus}"
@@ -240,13 +240,13 @@ echo "   nvim +Lazy              # Manage plugins"
 echo "   :help lazyvim           # View documentation"
 echo ""
 echo "3. Upload scripts to VM:"
-echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
+echo "   scp -i ${SSH_KEY_PATH} ${SCRIPT_DIR}/../common/*.sh ${SCRIPT_DIR}/*.sh ${ADMIN_USER}@${PUBLIC_IP}:~/"
 echo ""
 echo "4. Run SSH hardening (from your local machine):"
 echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@${PUBLIC_IP} 'bash ~/01-ssh-hardening.sh'"
 echo ""
 echo "5. Clean up resources when done:"
-echo "   ./cleanup-phase1.sh"
+echo "   ./scripts/common/cleanup-phase1.sh"
 echo ""
 
 log_success "VM is ready for use with LazyVim pre-installed!"

@@ -168,10 +168,10 @@ PhaseX/
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/01-ssh-hardening.sh` | Automated SSH hardening |
-| `scripts/04-validate-ansible.sh` | Ansible validation |
-| `scripts/create-multi-vms.sh` | Create 7 VMs for multi-node testing |
-| `scripts/cleanup.sh` | All Phase 1 cleanup (single & multi-VM) |
+| `scripts/common/01-ssh-hardening.sh` | Automated SSH hardening |
+| `scripts/common/04-validate-ansible.sh` | Ansible validation |
+| `scripts/ubuntu/create-multi-vms.sh` | Create 7 VMs for multi-node testing |
+| `scripts/common/cleanup-phase1.sh` | All Phase 1 cleanup (single & multi-VM) |
 
 #### Professional Deliverables
 

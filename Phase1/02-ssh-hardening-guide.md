@@ -254,7 +254,7 @@ sudo ss -tlnp | grep ssh
 
 ## Using the Automated Script
 
-The `scripts/01-ssh-hardening.sh` script automates all steps above.
+The `scripts/common/01-ssh-hardening.sh` script automates all steps above.
 
 ### Before Running
 
@@ -267,7 +267,7 @@ The `scripts/01-ssh-hardening.sh` script automates all steps above.
 
 ```bash
 # Upload the script to VM
-scp scripts/01-ssh-hardening.sh azureuser@$VM_IP:~/
+scp scripts/common/01-ssh-hardening.sh azureuser@$VM_IP:~/
 
 # Make executable
 chmod +x 01-ssh-hardening.sh

@@ -601,7 +601,7 @@ Run the automated script:
 
 ```bash
 # Upload and run
-scp scripts/01-ssh-hardening.sh azureuser@$VM_IP:~/
+scp scripts/common/01-ssh-hardening.sh azureuser@$VM_IP:~/
 ssh azureuser@$VM_IP "chmod +x ~/01-ssh-hardening.sh && sudo ~/01-ssh-hardening.sh"
 ```
 

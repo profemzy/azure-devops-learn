@@ -306,7 +306,7 @@ permitrootlogin without-password
 
 ```bash
 # Upload the hardening script
-scp scripts/01-ssh-hardening.sh azureuser@$PUBLIC_IP:~/
+scp scripts/common/01-ssh-hardening.sh azureuser@$PUBLIC_IP:~/
 
 # Make it executable
 ssh azureuser@$PUBLIC_IP "chmod +x ~/01-ssh-hardening.sh"
@@ -320,7 +320,7 @@ az vm run-command invoke \
   --resource-group devops-learn-rg \
   --name devops-learn-vm \
   --command-id RunShellScript \
-  --scripts "wget -O ~/01-ssh-hardening.sh https://raw.githubusercontent.com/your-repo/scripts/01-ssh-hardening.sh && chmod +x ~/01-ssh-hardening.sh"
+  --scripts "wget -O ~/01-ssh-hardening.sh https://raw.githubusercontent.com/your-repo/Phase1/scripts/common/01-ssh-hardening.sh && chmod +x ~/01-ssh-hardening.sh"
 ```
 
 ### Method 3: Cloud-Init (For New VMs)
@@ -335,7 +335,7 @@ package_update: true
 packages:
   - openssh-server
 runcmd:
-  - wget -O /home/azureuser/01-ssh-hardening.sh https://raw.githubusercontent.com/your-repo/scripts/01-ssh-hardening.sh
+  - wget -O /home/azureuser/01-ssh-hardening.sh https://raw.githubusercontent.com/your-repo/Phase1/scripts/common/01-ssh-hardening.sh
   - chmod +x /home/azureuser/01-ssh-hardening.sh
   - sudo /home/azureuser/01-ssh-hardening.sh
 EOF

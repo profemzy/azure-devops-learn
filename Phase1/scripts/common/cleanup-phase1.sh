@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase 1: Intelligent Unified Cleanup Script
 # Automatically detects and cleans up Phase 1 resources
-# Usage: ./cleanup-phase1.sh
+# Usage (from Phase1 dir): ./scripts/common/cleanup-phase1.sh
 #
 # Environment Variables:
 #   AZURE_DELETE_RG       - Delete resource groups? (default: true)
@@ -339,3 +339,4 @@ fi
 
 echo ""
 log_success "Phase 1 cleanup complete!"
+

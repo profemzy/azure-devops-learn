@@ -562,5 +562,5 @@ deactivate
 # SSH out of bastion
 exit
 
-# From local machine, run cleanup script
-./Phase1/scripts/cleanup-multi-vms.sh
+# From local machine (repo root), run the unified cleanup script
+./Phase1/scripts/common/cleanup-phase1.sh

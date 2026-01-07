@@ -407,3 +407,4 @@ copy_to_vm() {
         return 1
     fi
 }
+

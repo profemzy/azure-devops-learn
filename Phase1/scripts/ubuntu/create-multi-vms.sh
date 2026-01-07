@@ -15,7 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source common functions
-source "${SCRIPT_DIR}/az-common.sh"
+source "${SCRIPT_DIR}/../common/az-common.sh"
 
 # Configuration
 LOCATION="${1:-${AZURE_LOCATION:-eastus}}"
@@ -434,7 +434,7 @@ echo "   nvim ~/ansible-inventory.ini"
 echo "   :help lazyvim  # View LazyVim documentation"
 echo ""
 echo "7. Clean up when done:"
-echo "   ./cleanup-phase1.sh"
+echo "   ./scripts/common/cleanup-phase1.sh"
 echo ""
 
 log_success "Multi-VM environment is ready for Ansible testing with LazyVim!"

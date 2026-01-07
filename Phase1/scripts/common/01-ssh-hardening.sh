@@ -77,3 +77,4 @@ else
 fi
 
 echo "[WARNING] If you get locked out, use Azure Serial Console or: az vm run-command invoke"
+

@@ -350,7 +350,7 @@ az vm list \
 ```bash
 #!/bin/bash
 # Phase 1: Create Multi-VM Infrastructure for Ansible Testing
-# Usage: ./create-multi-vms.sh [location]
+# Usage: ./scripts/ubuntu/create-multi-vms.sh [location]
 
 set -euo pipefail
 
@@ -575,11 +575,11 @@ echo "  3. Configure Ansible inventory"
 echo "  4. Run ansible-playbook"
 ```
 
-Save this as `scripts/create-multi-vms.sh` and make it executable:
+Save this as `scripts/ubuntu/create-multi-vms.sh` and make it executable:
 
 ```bash
-chmod +x scripts/create-multi-vms.sh
-./scripts/create-multi-vms.sh eastus
+chmod +x scripts/ubuntu/create-multi-vms.sh
+./scripts/ubuntu/create-multi-vms.sh eastus
 ```
 
 ---
@@ -830,11 +830,13 @@ az network vnet delete \
 echo "Cleanup initiated. Resource group will be deleted shortly."
 ```
 
-Save as `scripts/cleanup-multi-vms.sh`:
+Save as `scripts/cleanup-multi-vms.sh` (optional):
 
 ```bash
 chmod +x scripts/cleanup-multi-vms.sh
 ./scripts/cleanup-multi-vms.sh
+
+> Note: In this repo you can also use the unified cleanup script: `scripts/common/cleanup-phase1.sh`
 ```
 
 ---
@@ -843,8 +845,8 @@ chmod +x scripts/cleanup-multi-vms.sh
 
 | Deliverable | Description | Location |
 |-------------|-------------|----------|
-| Multi-VM Setup Script | Creates 7 VMs for testing | `scripts/create-multi-vms.sh` |
-| Cleanup Script | Removes all VMs and resources | `scripts/cleanup-multi-vms.sh` |
+| Multi-VM Setup Script | Creates 7 VMs for testing | `scripts/ubuntu/create-multi-vms.sh` |
+| Cleanup Script | Removes all VMs and resources | `scripts/common/cleanup-phase1.sh` |
 | Ansible Inventory | Multi-tier inventory file | `inventory/dev.yml` |
 | SSH Key Distribution | Playbook for key distribution | `distribute-keys.yml` |
 

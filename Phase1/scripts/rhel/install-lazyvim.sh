@@ -1,8 +1,14 @@
 #!/bin/bash
 # Phase 1: Install LazyVim on RHEL-compatible systems (AlmaLinux/Rocky/CentOS)
 # This script installs LazyVim (Neovim configuration)
-# Usage: ./install-lazyvim-rhel.sh
-# Can be run locally or via: ssh user@host 'bash -s' < install-lazyvim-rhel.sh
+# Usage: ./install-lazyvim.sh
+# Can be run locally or via: ssh user@host 'bash -s' < install-lazyvim.sh
+#
+# Note (EL9 / glibc): Some Neovim plugin tooling (notably Mason's prebuilt
+# `tree-sitter` CLI used by nvim-treesitter) may be compiled against newer glibc
+# than your distro provides, causing errors like `GLIBC_2.35 not found` when
+# installing Treesitter parsers. This script mitigates that by building a local
+# `tree-sitter-cli` via cargo (glibc-compatible) and wiring Mason to use it.
 
 set -euo pipefail
 
@@ -32,6 +38,25 @@ else
     log_info "Running as user - will use sudo for system packages"
     AS_ROOT=false
 fi
+
+# Determine the target user/home for user-level installs (cargo, mason, nvim config)
+# If this script is invoked via sudo, prefer the invoking user's HOME.
+TARGET_USER="$USER"
+TARGET_HOME="$HOME"
+if [ "$AS_ROOT" = true ] && [ -n "${SUDO_USER:-}" ]; then
+    TARGET_USER="$SUDO_USER"
+    TARGET_HOME="$(eval echo "~$SUDO_USER")"
+fi
+
+run_as_target_user() {
+    # Run a command as the target user with HOME set appropriately
+    local cmd="$1"
+    if [ "$AS_ROOT" = true ] && [ -n "${SUDO_USER:-}" ]; then
+        sudo -u "$TARGET_USER" -H bash -lc "$cmd"
+    else
+        bash -lc "$cmd"
+    fi
+}
 
 # Detect RHEL variant
 if [ -f /etc/os-release ]; then
@@ -333,11 +358,46 @@ if [ "$INSTALL_EXTRAS" = "true" ]; then
 
     # Install additional useful tools via Cargo
     if command -v cargo &> /dev/null; then
-        log_info "Installing Rust-based tools..."
-        if [ "$AS_ROOT" = true ]; then
-            cargo install tree-sitter-cli >/dev/null 2>&1 || true
+        # NOTE: On EL9 (Alma/Rocky/RHEL 9), Mason's prebuilt tree-sitter binary may
+        # require a newer glibc than the VM provides (e.g. GLIBC_2.35/2.39).
+        # When that happens, nvim-treesitter fails to compile parsers.
+        # Fix: build tree-sitter-cli locally (glibc-compatible) and point Mason's
+        # tree-sitter shim to it.
+
+        log_info "Ensuring tree-sitter-cli is available for nvim-treesitter (glibc-compatible build)..."
+
+        # Build deps for tree-sitter-cli (bindgen requires libclang)
+        install_package "clang"
+        install_package "clang-libs"
+        install_package "clang-devel"
+        install_package "llvm-devel"
+
+        # Prefer the bundled libclang from llvm20 if available
+        LIBCLANG_PATH="/usr/lib64"
+        if [ -d "/usr/lib64/llvm20/lib64" ]; then
+            LIBCLANG_PATH="/usr/lib64/llvm20/lib64"
+        elif [ -d "/usr/lib/llvm20/lib" ]; then
+            LIBCLANG_PATH="/usr/lib/llvm20/lib"
+        fi
+
+        # If Mason already has a working tree-sitter, keep it.
+        # Otherwise install and then override Mason's tree-sitter shim.
+        if [ -x "${TARGET_HOME}/.local/share/nvim/mason/bin/tree-sitter" ] \
+           && "${TARGET_HOME}/.local/share/nvim/mason/bin/tree-sitter" --version >/dev/null 2>&1; then
+            log_info "Mason tree-sitter is already working"
         else
-            sudo -u "$SUDO_USER" cargo install tree-sitter-cli >/dev/null 2>&1 || true
+            log_info "Installing tree-sitter-cli via cargo (this may take a few minutes)..."
+            run_as_target_user "export LIBCLANG_PATH='${LIBCLANG_PATH}'; cargo install tree-sitter-cli --locked || true"
+
+            # Point Mason's tree-sitter wrapper to the locally-built one
+            run_as_target_user "mkdir -p '${TARGET_HOME}/.local/share/nvim/mason/bin' && ln -sf '${TARGET_HOME}/.cargo/bin/tree-sitter' '${TARGET_HOME}/.local/share/nvim/mason/bin/tree-sitter'"
+
+            if [ -x "${TARGET_HOME}/.local/share/nvim/mason/bin/tree-sitter" ] \
+               && "${TARGET_HOME}/.local/share/nvim/mason/bin/tree-sitter" --version >/dev/null 2>&1; then
+                log_success "tree-sitter-cli is installed and wired for Mason"
+            else
+                log_warning "tree-sitter-cli setup did not fully verify. If Treesitter parser installs fail, run: cargo install tree-sitter-cli --locked"
+            fi
         fi
     fi
 fi
@@ -486,7 +546,7 @@ echo "  4. Check health: :checkhealth lazy"
 echo "  5. Read docs: :help lazyvim"
 echo ""
 echo "To disable extra language toolchains in future:"
-echo "  INSTALL_EXTRA_LANGUAGES=false ./install-lazyvim-rhel.sh"
+echo "  INSTALL_EXTRA_LANGUAGES=false ./install-lazyvim.sh"
 echo ""
 echo "For more information:"
 echo "  https://www.lazyvim.org/"
