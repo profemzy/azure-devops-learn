@@ -46,7 +46,8 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
 
 | Script | Purpose |
 |--------|---------|
-| `create-linux-lab-vm.sh` | Create a single Linux VM for learning |
+| `create-linux-lab-vm.sh` | Create a single Ubuntu Linux VM for learning |
+| `create-rhel-lab-vm.sh` | Create a single RHEL-compatible VM (AlmaLinux) for learning |
 | `create-multi-vms.sh` | Create 7 VMs for Ansible testing (3-tier architecture) |
 
 ### Cleanup Script
@@ -54,6 +55,13 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
 | Script | Purpose |
 |--------|---------|
 | `cleanup-phase1.sh` | **🌟 UNIFIED INTELLIGENT CLEANUP** - Automatically detects and cleans up ALL Phase 1 resources |
+
+### Installation Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `install-lazyvim.sh` | Install LazyVim and development tools on Ubuntu/Debian |
+| `install-lazyvim-rhel.sh` | Install LazyVim and development tools on RHEL-compatible systems (AlmaLinux/Rocky/CentOS) |
 
 ## 📖 Usage
 
@@ -82,7 +90,7 @@ This directory contains improved Azure infrastructure scripts with enhanced erro
    ssh-keygen -t ed25519 -f ~/.ssh/azure-vm-key
    ```
 
-### Creating a Single VM
+### Creating a Single Ubuntu VM
 
 ```bash
 # Basic usage (defaults to eastus)
@@ -102,7 +110,33 @@ AZURE_VM_IMAGE=Ubuntu2204 ./create-linux-lab-vm.sh
 - Creates resource group: `devops-learn-rg`
 - Creates VM: `devops-learn-vm`
 - Opens SSH port (22)
+- Installs LazyVim and development tools
 - Displays connection information
+
+### Creating a Single RHEL-compatible VM (AlmaLinux)
+
+```bash
+# Basic usage (defaults to eastus)
+./create-rhel-lab-vm.sh
+
+# Specify location
+./create-rhel-lab-vm.sh westus2
+
+# With custom VM size
+AZURE_VM_SIZE=Standard_B2s ./create-rhel-lab-vm.sh
+
+# With custom AlmaLinux version
+AZURE_VM_IMAGE=AlmaLinux9 ./create-rhel-lab-vm.sh
+```
+
+**Output:**
+- Creates resource group: `devops-learn-rg`
+- Creates VM: `devops-rhel-vm`
+- Opens SSH port (22)
+- Installs LazyVim and development tools (RHEL-compatible versions)
+- Displays connection information
+
+**Note:** RHEL-compatible VMs use AlmaLinux, which is a 1:1 binary compatible fork of RHEL. Perfect for learning RHEL-based system administration.
 
 ### Cleaning Up Resources
 
@@ -143,7 +177,7 @@ AZURE_RESOURCE_GROUP=devops-learn-rg ./cleanup-phase1.sh
 ./create-multi-vms.sh westus2
 
 # With custom VM size
-AZURE_VM_SIZE=Standard_B4s ./create-multi-vms.sh
+AZURE_VM_SIZE=Standard_B4ms ./create-multi-vms.sh
 ```
 
 **Architecture:**
@@ -186,11 +220,25 @@ AZURE_VM_SIZE=Standard_B4s ./create-multi-vms.sh
 |----------|---------|-------------|
 | `AZURE_RESOURCE_GROUP` | `devops-learn-rg` | Resource group name |
 | `AZURE_VM_NAME` | `devops-learn-vm` | Virtual machine name |
-| `AZURE_VM_SIZE` | `Standard_B1s` | VM size |
+| `AZURE_VM_SIZE` | `Standard_B4ms` | VM size (4 vCPU, 16 GB RAM) |
 | `AZURE_VM_IMAGE` | `Ubuntu2404` | OS image |
 | `AZURE_ADMIN_USER` | `azureuser` | Admin username |
 | `AZURE_SSH_KEY_PATH` | `~/.ssh/azure-vm-key` | SSH key path |
 | `AZURE_LOCATION` | `eastus` | Azure region |
+| `AZURE_INSTALL_LAZYVIM` | `true` | Auto-install LazyVim |
+
+**Single RHEL VM (`create-rhel-lab-vm.sh`):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AZURE_RESOURCE_GROUP` | `devops-learn-rg` | Resource group name |
+| `AZURE_VM_NAME` | `devops-rhel-vm` | Virtual machine name |
+| `AZURE_VM_SIZE` | `Standard_B4ms` | VM size (4 vCPU, 16 GB RAM) |
+| `AZURE_VM_IMAGE` | `AlmaLinux9` | OS image (RHEL-compatible) |
+| `AZURE_ADMIN_USER` | `azureuser` | Admin username |
+| `AZURE_SSH_KEY_PATH` | `~/.ssh/azure-vm-key` | SSH key path |
+| `AZURE_LOCATION` | `eastus` | Azure region |
+| `AZURE_INSTALL_LAZYVIM` | `true` | Auto-install LazyVim |
 
 **Multi-VM (`create-multi-vms.sh`):**
 
@@ -198,11 +246,13 @@ AZURE_VM_SIZE=Standard_B4s ./create-multi-vms.sh
 |----------|---------|-------------|
 | `AZURE_RESOURCE_GROUP` | `rg-devops-learn` | Resource group name |
 | `AZURE_VNET_NAME` | `vnet-devops-learn` | Virtual network name |
-| `AZURE_VM_SIZE` | `Standard_B2s` | VM size |
+| `AZURE_VM_SIZE` | `Standard_B2s` | VM size for tier VMs |
+| `AZURE_VM_SIZE_BASTION` | `Standard_B4ms` | VM size for bastion (4 vCPU, 16 GB RAM) |
 | `AZURE_VM_IMAGE` | `Ubuntu2404` | OS image |
 | `AZURE_ADMIN_USER` | `azureuser` | Admin username |
 | `AZURE_SSH_KEY_PATH` | `~/.ssh/azure-vm-key` | SSH key path |
 | `AZURE_LOCATION` | `eastus` | Azure region |
+| `AZURE_INSTALL_LAZYVIM` | `true` | Auto-install LazyVim on bastion |
 
 #### Cleanup Script (`cleanup-phase1.sh`)
 

@@ -23,6 +23,7 @@ RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-rg-devops-learn}"
 VNET_NAME="${AZURE_VNET_NAME:-vnet-devops-learn}"
 ADMIN_USER="${AZURE_ADMIN_USER:-azureuser}"
 VM_SIZE="${AZURE_VM_SIZE:-Standard_B2s}"
+VM_SIZE_BASTION="${AZURE_VM_SIZE_BASTION:-Standard_B4ms}"
 VM_IMAGE="${AZURE_VM_IMAGE:-Ubuntu2404}"
 SSH_KEY_PATH="${AZURE_SSH_KEY_PATH:-$HOME/.ssh/azure-vm-key}"
 
@@ -295,12 +296,18 @@ create_vm() {
         return 0
     fi
 
-    log_info "  Creating VM: $name ($tier tier)"
+    # Use larger size for bastion, default for others
+    local vm_size="$VM_SIZE"
+    if [ "$name" = "bastion" ]; then
+        vm_size="$VM_SIZE_BASTION"
+    fi
+
+    log_info "  Creating VM: $name ($tier tier) - Size: $vm_size"
     if az vm create \
         --resource-group "$RESOURCE_GROUP" \
         --name "$name" \
         --image "$VM_IMAGE" \
-        --size "$VM_SIZE" \
+        --size "$vm_size" \
         --admin-username "$ADMIN_USER" \
         --ssh-key-values "$SSH_KEY" \
         --vnet-name "$VNET_NAME" \
@@ -309,7 +316,7 @@ create_vm() {
         --public-ip-sku Standard \
         --tags "tier=$tier" "environment=dev" "created-by=az-script" \
         --output none 2>/dev/null; then
-        log_success "  Created VM: $name"
+        log_success "  Created VM: $name ($vm_size)"
     else
         log_error "  Failed to create VM: $name"
         return 1
@@ -339,6 +346,38 @@ echo ""
 log_info "Database tier (1 VM):"
 create_vm "db1" "subnet-db" "nsg-db" "db"
 
+# Wait for VMs to be ready
+echo ""
+log_info "Waiting for VMs to finish provisioning..."
+sleep 15
+
+# Install LazyVim on bastion if requested
+INSTALL_LAZYVIM="${AZURE_INSTALL_LAZYVIM:-true}"
+
+if [ "$INSTALL_LAZYVIM" = "true" ]; then
+    echo ""
+    log_info "Installing LazyVim on bastion host..."
+    echo ""
+
+    BASTION_IP=$(az vm show --resource-group "$RESOURCE_GROUP" --name "bastion" --show-details --query "publicIps" -o tsv 2>/dev/null)
+
+    if [ -n "$BASTION_IP" ]; then
+        LAZYPATH="${SCRIPT_DIR}/install-lazyvim.sh"
+
+        if [ -f "$LAZYPATH" ]; then
+            if run_script_on_vm "$SSH_KEY_PATH" "$ADMIN_USER" "$BASTION_IP" "$LAZYPATH"; then
+                log_success "LazyVim installed on bastion"
+            else
+                log_warning "LazyVim installation on bastion failed (VM may still be booting)"
+            fi
+        else
+            log_warning "LazyVim installer script not found at: $LAZYPATH"
+        fi
+    else
+        log_warning "Failed to retrieve bastion IP - skipping LazyVim installation"
+    fi
+fi
+
 # Display VM information
 echo ""
 display_header "Setup Complete"
@@ -358,7 +397,7 @@ echo ""
 echo "1. Get bastion IP:"
 echo "   BASTION_IP=\$(az vm show -g $RESOURCE_GROUP -n bastion -d --query publicIps -o tsv)"
 echo ""
-echo "2. SSH to bastion:"
+echo "2. SSH to bastion (LazyVim pre-installed):"
 echo "   ssh -i ${SSH_KEY_PATH} ${ADMIN_USER}@\$BASTION_IP"
 echo ""
 echo "3. From bastion, distribute SSH keys to all VMs:"
@@ -390,8 +429,12 @@ echo ""
 echo "5. Test Ansible connectivity:"
 echo "   ansible all -i ~/ansible-inventory.ini -m ping"
 echo ""
-echo "6. Clean up when done:"
-echo "   ./cleanup-multi-vms.sh"
+echo "6. Edit files with LazyVim (on bastion):"
+echo "   nvim ~/ansible-inventory.ini"
+echo "   :help lazyvim  # View LazyVim documentation"
+echo ""
+echo "7. Clean up when done:"
+echo "   ./cleanup-phase1.sh"
 echo ""
 
-log_success "Multi-VM environment is ready for Ansible testing!"
+log_success "Multi-VM environment is ready for Ansible testing with LazyVim!"

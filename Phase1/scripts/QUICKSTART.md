@@ -207,18 +207,22 @@ az vm list-usage -l eastus -o table
 ## 💰 Cost Management
 
 ```bash
-# Estimate costs
-# - Single VM (B1s): ~$8-15/month
-# - Multi-VM (7x B2s): ~$100-150/month
+# Estimate costs (with LazyVim and build tools)
+# - Single VM (Standard_B4ms): ~$80-100/month (4 vCPU, 16 GB RAM)
+# - Multi-VM (1x B4ms bastion + 6x B2s): ~$150-200/month
+#
+# Use smaller sizes to reduce costs:
+#   AZURE_VM_SIZE=Standard_B2s ./create-linux-lab-vm.sh  # ~$30/month
+#   AZURE_VM_SIZE=Standard_B1s ./create-linux-lab-vm.sh  # ~$10/month
 
-# Stop VM when not in use
+# Stop VM when not in use (save costs)
 az vm deallocate -g devops-learn-rg -n devops-learn-vm
 
 # Start VM again
 az vm start -g devops-learn-rg -n devops-learn-vm
 
 # Delete when done
-./cleanup-linux-lab-vm.sh
+./cleanup-phase1.sh
 ```
 
 ## 🎓 Learning Path

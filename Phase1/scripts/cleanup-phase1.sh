@@ -136,11 +136,11 @@ for rg in "${FOUND_RGS[@]}"; do
     log_info "Resource Group: $rg"
 
     # Count VMs
-    local vm_count=0
-    local vm_list=""
+    vm_count=0
+    vm_list=""
     for vm_entry in "${FOUND_VMS[@]}"; do
-        local vm_rg="${vm_entry%%:*}"
-        local vm_name="${vm_entry##*:}"
+        vm_rg="${vm_entry%%:*}"
+        vm_name="${vm_entry##*:}"
 
         if [ "$vm_rg" == "$rg" ]; then
             vm_count=$((vm_count + 1))
@@ -154,7 +154,6 @@ for rg in "${FOUND_RGS[@]}"; do
     fi
 
     # Show other resources count
-    local resource_count
     resource_count=$(az resource list --resource-group "$rg" --query "length(@)" -o tsv 2>/dev/null || echo "0")
     echo "  Total Resources: $resource_count"
 done
@@ -179,26 +178,34 @@ echo ""
 if [ "${AZURE_DO_NOT_PROMPT:-}" != "true" ]; then
     echo "Cleanup options:"
     echo "  [1] Delete everything (all discovered resource groups)"
-    echo "  [2] Select specific resource groups to delete"
-    echo "  [3] Cancel"
+    echo "  [2] Delete VMs and resources (keep resource groups)"
+    echo "  [3] Select specific resource groups to delete"
+    echo "  [4] Cancel"
     echo ""
-    read -p "Choose option [1-3]: " -n 1 -r
+    read -p "Choose option [1-4]: " -n 1 -r
     echo ""
 
     case $REPLY in
         1)
             # Delete everything
-            log_info "Will delete all discovered resources"
+            log_info "Will delete all discovered resource groups and their contents"
             SELECTED_RGS=("${FOUND_RGS[@]}")
+            DELETE_RG="true"
             ;;
         2)
+            # Delete VMs and resources, keep RGs
+            log_info "Will delete VMs and their resources (keep resource groups for faster recreation)"
+            SELECTED_RGS=("${FOUND_RGS[@]}")
+            DELETE_RG="false"
+            ;;
+        3)
             # Select specific RGs
             echo ""
             echo "Select resource groups to delete (comma-separated numbers):"
             for i in "${!FOUND_RGS[@]}"; do
                 echo "  [$((i+1))] ${FOUND_RGS[$i]}"
-            echo ""
             done
+            echo ""
             read -p "Enter selection: " selection
 
             SELECTED_RGS=()
@@ -209,8 +216,17 @@ if [ "${AZURE_DO_NOT_PROMPT:-}" != "true" ]; then
                     SELECTED_RGS+=("${FOUND_RGS[$idx]}")
                 fi
             done
+
+            # Ask if they want to delete RGs or just VMs
+            echo ""
+            read -p "Delete resource groups? (y/N): " delete_rg_confirm
+            if [[ "$delete_rg_confirm" =~ ^[Yy]$ ]]; then
+                DELETE_RG="true"
+            else
+                DELETE_RG="false"
+            fi
             ;;
-        3)
+        4)
             log_info "Cleanup cancelled by user"
             exit 0
             ;;
@@ -269,8 +285,8 @@ for rg in "${SELECTED_RGS[@]}"; do
         log_info "Deleting VMs in: $rg (keeping resource group)"
 
         for vm_entry in "${FOUND_VMS[@]}"; do
-            local vm_rg="${vm_entry%%:*}"
-            local vm_name="${vm_entry##*:}"
+            vm_rg="${vm_entry%%:*}"
+            vm_name="${vm_entry##*:}"
 
             if [ "$vm_rg" == "$rg" ]; then
                 log_info "  Deleting VM: $vm_name"
